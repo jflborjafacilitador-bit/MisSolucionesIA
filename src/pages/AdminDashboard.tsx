@@ -235,7 +235,16 @@ export default function AdminDashboard() {
             <div className="bg-background border-b border-border shadow-sm">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-2">v2.0 — Firebase ✓</span></h1>
+                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                            Admin Dashboard
+                            <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
+                            </span>
+                            <span className="flex items-center gap-1 text-xs text-green-500 font-normal">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
+                                Online
+                            </span>
+                        </h1>
                         <div className="flex gap-1 mt-2">
                             {tabs.map(tab => (
                                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}

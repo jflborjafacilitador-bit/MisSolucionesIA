@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function AIAnalisis({ data }: Props) {
-    const [analysis, setAnalysis] = useState('');
+    const [analysisData, setAnalysisData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -22,8 +22,7 @@ export default function AIAnalisis({ data }: Props) {
         setLoading(true);
         setError('');
         try {
-            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
             const prompt = `
         Tengo un cliente llamado ${data.nombre} que está interesado en un proyecto de tipo "${data.proyecto}".
         Su presupuesto indicado es: ${data.presupuesto}.
@@ -31,21 +30,25 @@ export default function AIAnalisis({ data }: Props) {
         La descripción de su idea es la siguiente:
         "${data.descripcion}"
         
-        Como experto en desarrollo de software y ventas B2B, analiza esto:
-        1. Interpreta detalladamente qué es lo que busca el cliente y cuáles son las características técnicas principales que requiere.
-        2. Analiza si su presupuesto es realista.
-        3. Cuánto podríamos cobrar realmente por este proyecto (escribe un rango estimado en Pesos Mexicanos MXN).
-        4. ¿Qué estrategia de ventas deberíamos abordar con este cliente para convencerlo?
-        
-        Responde sin usar formato Markdown complejo (evita negritas marcadas con **), utiliza listas con guiones simples para que sea fácil de leer en texto plano.
+        Como experto en desarrollo de software y ventas B2B, analiza esto y responde ÚNICAMENTE con un objeto JSON válido con la siguiente estructura exacta:
+        {
+          "interpretacion": "Breve interpretación de lo que busca el cliente y características técnicas principales.",
+          "analisisPresupuesto": "Análisis breve de si su presupuesto es realista.",
+          "costoCreacion": "Rango estimado en MXN de lo que deberíamos cobrar por el desarrollo inicial (ej. $15,000 - $25,000 MXN).",
+          "costoMensualidad": "Rango estimado en MXN de lo que deberíamos cobrar de mensualidad por mantenimiento y soporte (ej. $2,000 - $5,000 MXN).",
+          "estrategiaVentas": "Breve estrategia de ventas recomendada para convencer al cliente."
+        }
+        NO incluyas formato markdown (\`\`\`json etc), solo el objeto JSON crudo en texto plano.
       `;
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            setAnalysis(response.text());
+            const text = response.text().replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+            const parsedData = JSON.parse(text);
+            setAnalysisData(parsedData);
         } catch (err: any) {
             console.error(err);
-            setError('Error al generar el análisis. Verifica la API Key y la conexión.');
+            setError(`Error: ${err.message || 'Error al generar el análisis. Verifica la API Key y la conexión.'}`);
         } finally {
             setLoading(false);
         }
@@ -57,28 +60,54 @@ export default function AIAnalisis({ data }: Props) {
                 <h3 className="text-lg font-bold flex items-center gap-2 text-primary">
                     <FiCpu className="w-5 h-5" /> Análisis con AI (Gemini)
                 </h3>
-                {!analysis && !loading && (
+                {!analysisData && !loading && (
                     <button
                         onClick={analyzeRequest}
                         className="text-sm font-semibold bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
                     >
-                        Generar Resumen y Cotización
+                        Generar Análisis Inteligente
                     </button>
                 )}
             </div>
 
             {loading && (
-                <div className="flex items-center justify-center gap-3 text-muted-foreground py-8">
-                    <FiLoader className="w-6 h-6 animate-spin text-primary" />
-                    <span className="text-base font-medium">Analizando requerimientos con Gemini...</span>
+                <div className="flex items-center justify-center gap-3 text-muted-foreground py-12">
+                    <FiLoader className="w-8 h-8 animate-spin text-primary" />
+                    <span className="text-lg font-medium">Analizando con Inteligencia Artificial...</span>
                 </div>
             )}
 
-            {error && <p className="text-sm text-destructive p-4 bg-destructive/10 rounded-md">{error}</p>}
+            {error && <p className="text-sm text-destructive p-4 bg-destructive/10 rounded-md border border-destructive/20">{error}</p>}
 
-            {analysis && (
-                <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed mt-4 bg-background p-6 rounded-lg border border-border/50 shadow-inner">
-                    {analysis}
+            {analysisData && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div className="col-span-1 md:col-span-2 bg-background p-5 rounded-lg border border-border shadow-sm">
+                        <h4 className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
+                            Interpretación del Requerimiento
+                        </h4>
+                        <p className="text-sm text-foreground/80 leading-relaxed">{analysisData.interpretacion}</p>
+                    </div>
+
+                    <div className="bg-background p-5 rounded-lg border border-border shadow-sm">
+                        <h4 className="text-sm font-semibold text-primary mb-2">Presupuesto del Cliente</h4>
+                        <p className="text-sm text-foreground/80 leading-relaxed mb-4">{analysisData.analisisPresupuesto}</p>
+
+                        <div className="space-y-3 pt-3 border-t border-border">
+                            <div>
+                                <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Costo Estimado de Creación</h5>
+                                <p className="text-lg font-bold text-green-600 dark:text-green-400">{analysisData.costoCreacion}</p>
+                            </div>
+                            <div>
+                                <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Mensualidad por Mantenimiento</h5>
+                                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{analysisData.costoMensualidad}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-background p-5 rounded-lg border border-border shadow-sm">
+                        <h4 className="text-sm font-semibold text-primary mb-2">Estrategia de Ventas Recomendada</h4>
+                        <p className="text-sm text-foreground/80 leading-relaxed">{analysisData.estrategiaVentas}</p>
+                    </div>
                 </div>
             )}
         </div>

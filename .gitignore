@@ -25,3 +25,9 @@ pnpm-debug.log*
 
 # SO
 .DS_Store
+
+# Supabase legacy files
+supabase_*.sql
+
+# Scripts con credenciales
+create-firebase-admin.mjs

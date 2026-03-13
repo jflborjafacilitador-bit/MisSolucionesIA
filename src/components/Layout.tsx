@@ -1,8 +1,10 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { FiSun, FiMoon } from 'react-icons/fi';
+import { FiSun, FiMoon, FiSettings } from 'react-icons/fi';
+import { useAuth } from '../lib/AuthContext';
 
 export default function Layout() {
+    const { user, isAdmin } = useAuth();
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
         return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
     });
@@ -28,9 +30,12 @@ export default function Layout() {
                     </Link>
 
                     <nav className="flex items-center gap-4 sm:gap-6">
-                        <Link to="/cotizacion" className="text-sm font-medium transition-colors hover:text-primary hidden sm:inline-block">
-                            Cotización
-                        </Link>
+                        {!user && (
+                            <Link to="/cotizacion" className="text-sm font-medium transition-colors hover:text-primary hidden sm:inline-block">
+                                Cotización
+                            </Link>
+                        )}
+
                         <div className="flex items-center gap-2 sm:gap-4">
                             <button
                                 onClick={toggleTheme}
@@ -39,12 +44,23 @@ export default function Layout() {
                             >
                                 {theme === 'light' ? <FiMoon className="w-5 h-5" /> : <FiSun className="w-5 h-5" />}
                             </button>
-                            <Link
-                                to="/login"
-                                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 sm:h-10 px-4 py-2"
-                            >
-                                Acceder
-                            </Link>
+
+                            {user ? (
+                                <Link
+                                    to={isAdmin ? '/admin' : '/partner'}
+                                    className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground h-9 sm:h-10 px-4 py-2"
+                                >
+                                    <FiSettings className="w-4 h-4" />
+                                    {isAdmin ? 'Admin' : 'Mi Panel'}
+                                </Link>
+                            ) : (
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 sm:h-10 px-4 py-2"
+                                >
+                                    Acceder
+                                </Link>
+                            )}
                         </div>
                     </nav>
                 </div>

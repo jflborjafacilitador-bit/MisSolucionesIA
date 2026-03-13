@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { supabase } from '../lib/supabase';
+import { useSearchParams } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { FiSend } from 'react-icons/fi';
@@ -12,6 +14,7 @@ type FormData = {
     proyecto: string;
     presupuesto: string;
     descripcion: string;
+    referral_code_used?: string;
 };
 
 const opcionesProyecto = [
@@ -29,35 +32,38 @@ const opcionesProyecto = [
 ];
 
 export default function CotizacionPage() {
-    const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
+    const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<FormData>();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const refCode = searchParams.get('ref');
+        if (refCode) {
+            setValue('referral_code_used', refCode);
+        }
+    }, [searchParams, setValue]);
 
     const onSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
-            const { error } = await supabase
-                .from('cotizaciones')
-                .insert([
-                    {
-                        nombre: data.nombre,
-                        telefono: data.telefono,
-                        correo: data.correo,
-                        proyecto: data.proyecto,
-                        presupuesto: data.presupuesto,
-                        descripcion: data.descripcion
-                    }
-                ]);
-
-            if (error) {
-                console.error('Supabase error:', error);
-                toast.error('Hubo un error al enviar tu solicitud. Intenta de nuevo.');
-            } else {
-                toast.success('¡Cotización enviada con éxito! Nos pondremos en contacto pronto.');
-                reset();
-            }
+            await addDoc(collection(db, 'cotizaciones'), {
+                nombre: data.nombre,
+                telefono: data.telefono || null,
+                correo: data.correo,
+                proyecto: data.proyecto,
+                presupuesto: data.presupuesto,
+                descripcion: data.descripcion,
+                referralCodeUsed: data.referral_code_used || null,
+                status: 'por_atender',
+                precioCotizado: null,
+                notasAdmin: null,
+                createdAt: serverTimestamp(),
+            });
+            toast.success('¡Cotización enviada con éxito! Nos pondremos en contacto pronto.');
+            reset();
         } catch (err) {
             console.error(err);
-            toast.error('Ocurrió un error inesperado.');
+            toast.error('Ocurrió un error al enviar tu solicitud. Intenta de nuevo.');
         } finally {
             setIsSubmitting(false);
         }
@@ -160,6 +166,20 @@ export default function CotizacionPage() {
                                 className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"
                             />
                             {errors.descripcion && <p className="text-sm text-destructive">{errors.descripcion.message}</p>}
+                        </div>
+
+                        {/* Campo de Código de Referido */}
+                        <div className="bg-muted/30 border border-dashed border-border rounded-lg p-4 space-y-2">
+                            <label className="text-sm font-medium leading-none text-muted-foreground flex items-center gap-2">
+                                🤝 ¿Alguien te recomendó? <span className="text-xs font-normal">(Opcional)</span>
+                            </label>
+                            <input
+                                {...register('referral_code_used')}
+                                placeholder="Ingresa el código de tu referidor, ej: MSI-A3X7KQ"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 uppercase"
+                                onChange={(e) => e.target.value = e.target.value.toUpperCase()}
+                            />
+                            <p className="text-xs text-muted-foreground">Si recibiste un enlace especial o código de quien te presentó MisSoluciones, ingrésalo aquí.</p>
                         </div>
 
                         <button

@@ -1,0 +1,41 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_MP_PUBLIC_KEY: ${{ secrets.VITE_MP_PUBLIC_KEY }}
+          VITE_MP_ACCESS_TOKEN: ${{ secrets.VITE_MP_ACCESS_TOKEN }}
+        run: npm run build
+
+      - name: Deploy via SSH (rsync)
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: dist/
+          remote_path: /home/u998920878/domains/missolucionesia.com/public_html/
+          remote_host: 217.196.54.114
+          remote_port: 65002
+          remote_user: u998920878
+          remote_password: ${{ secrets.SSH_PASSWORD }}

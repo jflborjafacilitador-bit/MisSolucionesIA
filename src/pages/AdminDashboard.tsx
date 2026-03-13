@@ -7,6 +7,7 @@ import AIAnalisis from '../components/AIAnalisis';
 import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { createMPPreference } from '../lib/mercadopago';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type CotizacionStatus = 'por_atender' | 'en_proceso' | 'atendida' | 'descartada';
 
@@ -624,6 +625,50 @@ export default function AdminDashboard() {
                                     <p className="text-3xl font-black mt-1">{cotizadasConPrecio.length}</p>
                                 </div>
                             </div>
+
+                            {/* ===== MONTHLY REVENUE CHART ===== */}
+                            {(() => {
+                                // Build monthly data from cotizaciones with precioCotizado
+                                const monthlyMap: Record<string, { mes: string; cotizado: number; atendido: number }> = {};
+                                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                cotizaciones.filter(c => c.precioCotizado).forEach(c => {
+                                    const d = c.createdAt?.toDate ? c.createdAt.toDate() : new Date((c.createdAt as any)?.seconds * 1000);
+                                    if (!d) return;
+                                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                    const label = `${meses[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+                                    if (!monthlyMap[key]) monthlyMap[key] = { mes: label, cotizado: 0, atendido: 0 };
+                                    monthlyMap[key].cotizado += c.precioCotizado || 0;
+                                    if (c.status === 'atendida') monthlyMap[key].atendido += c.precioCotizado || 0;
+                                });
+                                const chartData = Object.entries(monthlyMap).sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v);
+                                if (chartData.length === 0) return null;
+                                return (
+                                    <div className="bg-card border border-border/50 rounded-xl shadow-sm p-5">
+                                        <h3 className="font-semibold mb-1">Ingresos por Mes</h3>
+                                        <p className="text-xs text-muted-foreground mb-4">Monto cotizado vs. atendido/cobrado por mes</p>
+                                        <ResponsiveContainer width="100%" height={220}>
+                                            <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="gradCotizado" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#6C63FF" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#6C63FF" stopOpacity={0} />
+                                                    </linearGradient>
+                                                    <linearGradient id="gradAtendido" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.35} />
+                                                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                                                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
+                                                <Tooltip formatter={(v: unknown) => `$${Number(v).toLocaleString()}`} />
+                                                <Area type="monotone" dataKey="cotizado" name="Cotizado" stroke="#6C63FF" fill="url(#gradCotizado)" strokeWidth={2} />
+                                                <Area type="monotone" dataKey="atendido" name="Atendido" stroke="#22c55e" fill="url(#gradAtendido)" strokeWidth={2} />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                );
+                            })()}
 
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 {(Object.keys(statusConfig) as CotizacionStatus[]).map(s => {

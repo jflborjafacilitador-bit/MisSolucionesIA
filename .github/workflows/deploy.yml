@@ -29,13 +29,14 @@ jobs:
           VITE_MP_ACCESS_TOKEN: ${{ secrets.VITE_MP_ACCESS_TOKEN }}
         run: npm run build
 
-      - name: Deploy via SSH (rsync)
-        uses: burnett01/rsync-deployments@7.0.1
+      - name: Deploy via SCP to Hostinger
+        uses: appleboy/scp-action@v0.1.7
         with:
-          switches: -avzr --delete
-          path: dist/
-          remote_path: /home/u998920878/domains/missolucionesia.com/public_html/
-          remote_host: 217.196.54.114
-          remote_port: 65002
-          remote_user: u998920878
-          remote_password: ${{ secrets.SSH_PASSWORD }}
+          host: 217.196.54.114
+          port: 65002
+          username: u998920878
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: "dist/*"
+          target: /home/u998920878/domains/missolucionesia.com/public_html/
+          strip_components: 1
+          rm: true

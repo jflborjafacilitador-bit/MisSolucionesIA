@@ -150,94 +150,175 @@ export default function AdminDashboard() {
         if (!selected) return;
         const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
         const W = 210;
-        const margin = 20;
-        let y = 20;
+        const M = 20; // left margin
+        const MR = W - M; // right margin
+        const textW = W - M * 2;
+        let y = 0;
 
-        // Header stripe
-        pdf.setFillColor(108, 99, 255);
-        pdf.rect(0, 0, W, 18, 'F');
+        const PURPLE = [108, 99, 255] as [number, number, number];
+        const DARK = [25, 25, 40] as [number, number, number];
+        const GRAY = [120, 120, 130] as [number, number, number];
+        const LIGHT = [245, 245, 250] as [number, number, number];
+
+        const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+        const folioNum = `MSI-${Date.now().toString().slice(-6)}`;
+
+        // ── HEADER BAND ───────────────────────────────────────────────
+        pdf.setFillColor(...PURPLE);
+        pdf.rect(0, 0, W, 24, 'F');
+
         pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(13);
+        pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('MisSolucionesIA — Propuesta de Servicio', margin, 12);
+        pdf.text('MisSolucionesIA', M, 10);
+        pdf.setFontSize(8.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('missolucionesia.com  |  soporte@missolucionesia.com', M, 16);
 
-        pdf.setTextColor(40, 40, 40);
-        y = 35;
+        // Folio top-right
+        pdf.setFontSize(8);
+        pdf.text(`Folio: ${folioNum}`, MR - 30, 10);
+        pdf.text(`Fecha: ${fecha}`, MR - 30, 15);
 
-        // Title
-        pdf.setFontSize(18);
+        // ── TITLE ─────────────────────────────────────────────────────
+        y = 33;
+        pdf.setTextColor(...DARK);
+        pdf.setFontSize(15);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('Propuesta / Acuerdo de Servicio', margin, y);
-        y += 8;
-
-        pdf.setDrawColor(200, 200, 200);
-        pdf.line(margin, y, W - margin, y);
-        y += 8;
-
-        // Client info
-        const addField = (label: string, value: string) => {
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(130, 130, 130);
-            pdf.text(label.toUpperCase(), margin, y);
-            y += 5;
-            pdf.setFontSize(11);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(30, 30, 30);
-            pdf.text(value || '—', margin, y);
-            y += 8;
-        };
-
-        addField('Cliente', selected.nombre);
-        addField('Correo', selected.correo);
-        if (selected.telefono) addField('Teléfono', selected.telefono);
-        addField('Proyecto / Concepto', paymentTitle || selected.proyecto);
-        addField('Monto acordado', `$${parseFloat(paymentAmount || '0').toLocaleString()} MXN`);
-        addField('Fecha de emisión', new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }));
-
-        y += 4;
-        pdf.line(margin, y, W - margin, y);
-        y += 8;
-
-        // Terms
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(40, 40, 40);
-        pdf.text('Términos y Condiciones', margin, y);
+        pdf.text('ACUERDO DE PRESTACIÓN DE SERVICIOS', W / 2, y, { align: 'center' });
+        y += 2;
+        pdf.setFillColor(...PURPLE);
+        pdf.rect(M, y, textW, 0.8, 'F');
         y += 7;
 
-        const terms = [
-            '1. El 50% del monto debe pagarse como anticipo para iniciar el proyecto.',
-            '2. El 50% restante se liquida al entregar el entregable principal acordado.',
-            '3. El proveedor se compromete a entregar el proyecto en los tiempos acordados.',
-            '4. Cualquier modificación fuera del alcance acordado generará un presupuesto adicional.',
-            '5. Toda comunicación oficial se realizará por correo electrónico.',
-        ];
+        // ── PARTIES SECTION ───────────────────────────────────────────
+        const addSection = (title: string) => {
+            y += 3;
+            pdf.setFillColor(...LIGHT);
+            pdf.rect(M, y - 4, textW, 7, 'F');
+            pdf.setFontSize(9.5);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(...PURPLE);
+            pdf.text(title, M + 2, y);
+            pdf.setTextColor(...DARK);
+            y += 6;
+        };
 
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
-        pdf.setTextColor(80, 80, 80);
-        terms.forEach(t => {
-            const lines = pdf.splitTextToSize(t, W - margin * 2);
-            pdf.text(lines, margin, y);
-            y += lines.length * 5 + 2;
-        });
+        const addLine = (label: string, value: string, bold = false) => {
+            pdf.setFontSize(8.5);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(...GRAY);
+            pdf.text(label, M, y);
+            pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+            pdf.setTextColor(...DARK);
+            const lines = pdf.splitTextToSize(value || '—', textW - 45);
+            pdf.text(lines, M + 45, y);
+            y += lines.length * 5;
+        };
 
-        y += 8;
-        // Signature line
-        pdf.setDrawColor(100, 100, 100);
-        pdf.line(margin, y, 90, y);
-        pdf.text('Firma del cliente', margin, y + 5);
-        pdf.line(120, y, W - margin, y);
-        pdf.text('MisSolucionesIA', 120, y + 5);
+        const addClause = (num: string, title: string, body: string) => {
+            if (y > 255) { pdf.addPage(); y = 20; }
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(...DARK);
+            pdf.text(`${num}. ${title}`, M, y);
+            y += 5;
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8.5);
+            pdf.setTextColor(60, 60, 70);
+            const lines = pdf.splitTextToSize(body, textW);
+            pdf.text(lines, M, y);
+            y += lines.length * 4.5 + 3;
+        };
 
-        // Footer
+        addSection('PARTES DEL ACUERDO');
+        addLine('Proveedor:', 'MisSolucionesIA');
+        addLine('Representante:', 'Joseph Frank Lolek Borja Bonilla');
+        addLine('Sitio web:', 'missolucionesia.com');
+        addLine('Soporte:', 'soporte@missolucionesia.com');
+        y += 2;
+        addLine('Cliente:', selected.nombre, true);
+        addLine('Correo:', selected.correo);
+        if (selected.telefono) addLine('Teléfono:', selected.telefono);
+
+        addSection('DATOS DEL SERVICIO');
+        addLine('Concepto:', paymentTitle || selected.proyecto, true);
+        addLine('Monto total:', `$${parseFloat(paymentAmount || '0').toLocaleString(undefined, { minimumFractionDigits: 2 })} MXN`, true);
+        addLine('Fecha del acuerdo:', fecha);
+        addLine('Folio:', folioNum);
+
+        addSection('TÉRMINOS Y CONDICIONES');
+        y += 1;
+
+        addClause('1', 'OBJETO DEL CONTRATO',
+            `El Proveedor se compromete a desarrollar y entregar el servicio descrito en la sección "Datos del Servicio", conforme al alcance funcional acordado verbalmente o por escrito entre las partes antes de la firma del presente documento.`);
+
+        addClause('2', 'CONDICIONES DE PAGO',
+            `El Cliente se compromete a realizar el pago del 50% del monto total ($${(parseFloat(paymentAmount || '0') / 2).toLocaleString(undefined, { maximumFractionDigits: 2 })} MXN) como anticipo para el inicio del proyecto. El 50% restante se liquidará al momento de la entrega del entregable principal. El no pago en el plazo acordado dará derecho al Proveedor a suspender el proyecto sin responsabilidad.`);
+
+        addClause('3', 'PROPIEDAD INTELECTUAL',
+            `El código fuente, diseño, interfaces, bases de datos y materiales desarrollados por el Proveedor son propiedad exclusiva de MisSolucionesIA hasta la liquidación total del monto acordado. Una vez realizado el pago completo, el Cliente obtiene una licencia de uso exclusivo del sistema para sus fines comerciales propios.`);
+
+        addClause('4', 'RESTRICCIÓN DE USO Y NO REPLICACIÓN',
+            `El sistema, software o solución entregado NO podrá ser: (a) revendido o sublicenciado a terceros, (b) reproducido, clonado o reutilizado como base para ofrecer servicios similares a otras empresas, (c) modificado para fines distintos a los acordados sin autorización previa por escrito del Proveedor. El incumplimiento de esta cláusula otorga al Proveedor el derecho de exigir compensación económica equivalente al doble del monto original del contrato.`);
+
+        addClause('5', 'CONFIDENCIALIDAD Y COMUNICACIONES',
+            `Ambas partes acuerdan mantener en estricta confidencialidad cualquier información técnica, comercial, financiera o estratégica intercambiada durante la vigencia del proyecto. Esta obligación permanece vigente por 2 (dos) años posteriores a la entrega. Toda comunicación oficial deberá realizarse a través del correo electrónico soporte@missolucionesia.com o el canal escrito acordado entre las partes.`);
+
+        addClause('6', 'MODIFICACIONES DE ALCANCE',
+            `Cualquier funcionalidad adicional no contemplada en el alcance original deberá ser solicitada por escrito. El Proveedor evaluará el impacto en tiempo y costo y emitirá un presupuesto adicional antes de iniciar la modificación. El Cliente deberá aprobar dicho presupuesto por escrito.`);
+
+        addClause('7', 'GARANTÍA',
+            `El Proveedor ofrece una garantía de 30 días naturales a partir de la entrega del proyecto para corregir sin costo adicional cualquier error o falla directamente derivada del desarrollo entregado. Esta garantía no cubre cambios de alcance ni errores por uso inadecuado.`);
+
+        addClause('8', 'JURISDICCIÓN',
+            `Para cualquier controversia derivada del presente acuerdo, las partes se someten a las leyes aplicables de los Estados Unidos Mexicanos, renunciando a cualquier otro fuero que pudiera corresponderles por razón de sus domicilios presentes o futuros.`);
+
+        // ── SIGNATURES ────────────────────────────────────────────────
+        if (y > 245) { pdf.addPage(); y = 20; }
+        y += 6;
+        pdf.setDrawColor(180, 180, 190);
+        pdf.line(M, y, MR, y);
+        y += 6;
+
+        pdf.setFontSize(8.5);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...DARK);
+        pdf.text('FIRMAS DE CONFORMIDAD', W / 2, y, { align: 'center' });
+        y += 10;
+
+        const sigY = y + 12;
+        // Left: client
+        pdf.setDrawColor(80, 80, 100);
+        pdf.line(M, sigY, M + 70, sigY);
         pdf.setFontSize(8);
-        pdf.setTextColor(160, 160, 160);
-        pdf.text('MisSolucionesIA | missolucionesia.com', margin, 285);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...DARK);
+        pdf.text(selected.nombre || 'Cliente', M, sigY + 5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(...GRAY);
+        pdf.text('El Cliente', M, sigY + 10);
 
-        pdf.save(`contrato-${selected.nombre.replace(/\s+/g, '_')}-${Date.now()}.pdf`);
-        toast.success('Contrato PDF descargado');
+        // Right: company
+        pdf.setDrawColor(80, 80, 100);
+        pdf.line(MR - 70, sigY, MR, sigY);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...DARK);
+        pdf.text('Joseph Frank Lolek Borja Bonilla', MR - 70, sigY + 5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(...GRAY);
+        pdf.text('Representante Legal — MisSolucionesIA', MR - 70, sigY + 10);
+
+        // ── FOOTER ────────────────────────────────────────────────────
+        pdf.setFillColor(...PURPLE);
+        pdf.rect(0, 289, W, 8, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`MisSolucionesIA | missolucionesia.com | soporte@missolucionesia.com | Folio ${folioNum}`, W / 2, 294, { align: 'center' });
+
+        pdf.save(`contrato-MSI-${selected.nombre.replace(/\s+/g, '_')}-${folioNum}.pdf`);
+        toast.success('Contrato PDF descargado correctamente');
     };
 
     // Generate a random partner code

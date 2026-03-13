@@ -31,3 +31,6 @@ supabase_*.sql
 
 # Scripts con credenciales
 create-firebase-admin.mjs
+
+# Contexto interno / documentación IA (no subir al repo)
+_context/

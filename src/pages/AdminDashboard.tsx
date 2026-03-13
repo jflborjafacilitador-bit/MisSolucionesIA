@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import { createMPPreference } from '../lib/mercadopago';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import KanbanBoard from '../components/KanbanBoard';
-import { FiList, FiGrid } from 'react-icons/fi';
+import { FiList, FiGrid, FiFileText } from 'react-icons/fi';
+import jsPDF from 'jspdf';
 
 type CotizacionStatus = 'por_atender' | 'en_proceso' | 'atendida' | 'descartada';
 
@@ -143,6 +144,100 @@ export default function AdminDashboard() {
         } finally {
             setGeneratingLink(false);
         }
+    };
+
+    const generateContractPDF = () => {
+        if (!selected) return;
+        const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+        const W = 210;
+        const margin = 20;
+        let y = 20;
+
+        // Header stripe
+        pdf.setFillColor(108, 99, 255);
+        pdf.rect(0, 0, W, 18, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(13);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('MisSolucionesIA — Propuesta de Servicio', margin, 12);
+
+        pdf.setTextColor(40, 40, 40);
+        y = 35;
+
+        // Title
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Propuesta / Acuerdo de Servicio', margin, y);
+        y += 8;
+
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, y, W - margin, y);
+        y += 8;
+
+        // Client info
+        const addField = (label: string, value: string) => {
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(130, 130, 130);
+            pdf.text(label.toUpperCase(), margin, y);
+            y += 5;
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(30, 30, 30);
+            pdf.text(value || '—', margin, y);
+            y += 8;
+        };
+
+        addField('Cliente', selected.nombre);
+        addField('Correo', selected.correo);
+        if (selected.telefono) addField('Teléfono', selected.telefono);
+        addField('Proyecto / Concepto', paymentTitle || selected.proyecto);
+        addField('Monto acordado', `$${parseFloat(paymentAmount || '0').toLocaleString()} MXN`);
+        addField('Fecha de emisión', new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }));
+
+        y += 4;
+        pdf.line(margin, y, W - margin, y);
+        y += 8;
+
+        // Terms
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(40, 40, 40);
+        pdf.text('Términos y Condiciones', margin, y);
+        y += 7;
+
+        const terms = [
+            '1. El 50% del monto debe pagarse como anticipo para iniciar el proyecto.',
+            '2. El 50% restante se liquida al entregar el entregable principal acordado.',
+            '3. El proveedor se compromete a entregar el proyecto en los tiempos acordados.',
+            '4. Cualquier modificación fuera del alcance acordado generará un presupuesto adicional.',
+            '5. Toda comunicación oficial se realizará por correo electrónico.',
+        ];
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(80, 80, 80);
+        terms.forEach(t => {
+            const lines = pdf.splitTextToSize(t, W - margin * 2);
+            pdf.text(lines, margin, y);
+            y += lines.length * 5 + 2;
+        });
+
+        y += 8;
+        // Signature line
+        pdf.setDrawColor(100, 100, 100);
+        pdf.line(margin, y, 90, y);
+        pdf.text('Firma del cliente', margin, y + 5);
+        pdf.line(120, y, W - margin, y);
+        pdf.text('MisSolucionesIA', 120, y + 5);
+
+        // Footer
+        pdf.setFontSize(8);
+        pdf.setTextColor(160, 160, 160);
+        pdf.text('MisSolucionesIA | missolucionesia.com', margin, 285);
+
+        pdf.save(`contrato-${selected.nombre.replace(/\s+/g, '_')}-${Date.now()}.pdf`);
+        toast.success('Contrato PDF descargado');
     };
 
     // Generate a random partner code
@@ -816,7 +911,7 @@ export default function AdminDashboard() {
                                 <span className="font-medium text-foreground">{paymentTitle || '(sin concepto)'}</span> — <span className="text-green-600 font-bold">${parseFloat(paymentAmount || '0').toLocaleString()} MXN</span>
                             </div>
 
-                            <div className="flex gap-3 pt-1">
+                            <div className="flex gap-2 pt-1 flex-wrap">
                                 <button
                                     onClick={() => setShowPaymentModal(false)}
                                     className="flex-1 border border-border rounded-lg py-2.5 text-sm font-medium hover:bg-muted transition-colors"
@@ -824,11 +919,19 @@ export default function AdminDashboard() {
                                     Cancelar
                                 </button>
                                 <button
+                                    onClick={generateContractPDF}
+                                    disabled={!paymentTitle.trim() || !paymentAmount || parseFloat(paymentAmount) <= 0}
+                                    className="flex items-center gap-1.5 border border-border rounded-lg py-2.5 px-3 text-sm font-medium hover:bg-muted disabled:opacity-40 transition-colors"
+                                    title="Descargar contrato PDF"
+                                >
+                                    <FiFileText className="w-4 h-4" /> PDF
+                                </button>
+                                <button
                                     onClick={generatePaymentLink}
                                     disabled={!paymentTitle.trim() || !paymentAmount || parseFloat(paymentAmount) <= 0}
                                     className="flex-1 bg-[#00B1EA] text-white rounded-lg py-2.5 text-sm font-bold hover:bg-[#0095c8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <FiLink className="w-4 h-4" /> Generar Link de Pago
+                                    <FiLink className="w-4 h-4" /> Generar Link
                                 </button>
                             </div>
                         </div>

@@ -51,6 +51,9 @@ export default function AdminDashboard() {
     const [priceInput, setPriceInput] = useState('');
     const [notasInput, setNotasInput] = useState('');
     const [generatingLink, setGeneratingLink] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentTitle, setPaymentTitle] = useState('');
+    const [paymentAmount, setPaymentAmount] = useState('');
     const [showInviteForm, setShowInviteForm] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [invitePassword, setInvitePassword] = useState('');
@@ -108,13 +111,23 @@ export default function AdminDashboard() {
         toast.success('Solicitud eliminada.');
     };
 
-    const generatePaymentLink = async () => {
+    const openPaymentModal = () => {
         if (!selected || !selected.precioCotizado) return;
+        setPaymentTitle(selected.proyecto || '');
+        setPaymentAmount(String(selected.precioCotizado));
+        setShowPaymentModal(true);
+    };
+
+    const generatePaymentLink = async () => {
+        if (!selected) return;
+        const amount = parseFloat(paymentAmount);
+        if (!amount || amount <= 0) { toast.error('El monto debe ser mayor a 0'); return; }
         setGeneratingLink(true);
+        setShowPaymentModal(false);
         try {
             const link = await createMPPreference({
-                title: `${selected.proyecto} — MisSolucionesIA`,
-                amount: selected.precioCotizado,
+                title: `${paymentTitle} — MisSolucionesIA`,
+                amount,
                 clientEmail: selected.correo,
                 externalRef: selected.id,
             });
@@ -376,14 +389,14 @@ export default function AdminDashboard() {
                                                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Link de Pago — MercadoPago</p>
                                                     </div>
                                                     <button
-                                                        onClick={generatePaymentLink}
+                                                        onClick={openPaymentModal}
                                                         disabled={generatingLink}
                                                         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-[#00B1EA] text-white hover:bg-[#0095c8] disabled:opacity-60 transition-colors"
                                                     >
                                                         {generatingLink
                                                             ? <><FiRefreshCw className="w-3.5 h-3.5 animate-spin" /> Generando...</>
-                                                            : selected.linkPago
-                                                                ? <><FiRefreshCw className="w-3.5 h-3.5" /> Regenerar</>
+                                                            : selected?.linkPago
+                                                                ? <><FiRefreshCw className="w-3.5 h-3.5" /> Editar y Regenerar</>
                                                                 : <><FiLink className="w-3.5 h-3.5" /> Generar Link</>
                                                         }
                                                     </button>
@@ -641,6 +654,74 @@ export default function AdminDashboard() {
                     );
                 })()}
             </div>
+
+            {/* ===== PAYMENT CUSTOMIZATION MODAL ===== */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-[#00B1EA]/10 p-2.5 rounded-xl">
+                                <FiLink className="text-[#00B1EA] w-5 h-5" />
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-lg">Personalizar Cobro</h2>
+                                <p className="text-xs text-muted-foreground">Edita el concepto y monto antes de generar el link de MercadoPago</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">Concepto / Descripción del servicio</label>
+                                <input
+                                    type="text"
+                                    value={paymentTitle}
+                                    onChange={e => setPaymentTitle(e.target.value)}
+                                    placeholder="Ej: CRM con Pipeline personalizado"
+                                    className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-[#00B1EA]/40"
+                                />
+                                <p className="text-[11px] text-muted-foreground mt-1">Esto aparece como descripción en el checkout de MercadoPago</p>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">Monto a cobrar (MXN)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={paymentAmount}
+                                        onChange={e => setPaymentAmount(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full border border-border rounded-lg pl-7 pr-3 py-2.5 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-[#00B1EA]/40"
+                                    />
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-1">Precio original cotizado: <span className="font-semibold">${selected?.precioCotizado?.toLocaleString()} MXN</span></p>
+                            </div>
+                        </div>
+
+                        <div className="bg-muted/40 rounded-lg p-3 text-xs text-muted-foreground">
+                            <strong>Vista previa del cobro:</strong><br />
+                            <span className="font-medium text-foreground">{paymentTitle || '(sin concepto)'}</span> — <span className="text-green-600 font-bold">${parseFloat(paymentAmount || '0').toLocaleString()} MXN</span>
+                        </div>
+
+                        <div className="flex gap-3 pt-1">
+                            <button
+                                onClick={() => setShowPaymentModal(false)}
+                                className="flex-1 border border-border rounded-lg py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={generatePaymentLink}
+                                disabled={!paymentTitle.trim() || !paymentAmount || parseFloat(paymentAmount) <= 0}
+                                className="flex-1 bg-[#00B1EA] text-white rounded-lg py-2.5 text-sm font-bold hover:bg-[#0095c8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            >
+                                <FiLink className="w-4 h-4" /> Generar Link de Pago
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -3,7 +3,7 @@ import {
     FiPieChart, FiUsers, FiCalendar, FiDatabase,
     FiShoppingCart, FiBriefcase, FiHeadphones,
     FiTrendingUp, FiBox, FiBookOpen, FiArrowRight,
-    FiCheckCircle, FiSearch, FiBell
+    FiCheckCircle, FiSearch
 } from 'react-icons/fi';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';

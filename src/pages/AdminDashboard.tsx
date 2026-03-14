@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, orderBy, query, setDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
@@ -83,6 +83,7 @@ export default function AdminDashboard() {
     const [showConvertirModal, setShowConvertirModal] = useState(false);
     const [convertirFecha, setConvertirFecha] = useState('');
     const [convertirLoading, setConvertirLoading] = useState(false);
+    const [clienteViewMode, setClienteViewMode] = useState<'pipeline' | 'lista'>('pipeline');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -835,14 +836,42 @@ export default function AdminDashboard() {
                 {/* ======= TAB: CLIENTES ======= */}
                 {activeTab === 'clientes' && (
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
+                        {/* Header con toggle */}
+                        <div className="flex items-center justify-between flex-wrap gap-3">
                             <div>
-                                <h2 className="font-semibold text-lg">CRM — Clientes Activos</h2>
-                                <p className="text-sm text-muted-foreground">Pipeline de clientes con seguimiento de mensualidades. Arrastra para cambiar estado.</p>
+                                <h2 className="font-semibold text-lg">CRM — Clientes</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    {clienteViewMode === 'pipeline'
+                                        ? 'Pipeline visual. Arrastra para cambiar estado.'
+                                        : 'Vista tabla con todos los datos del cliente.'}
+                                </p>
                             </div>
-                            <div className="flex gap-2 text-xs">
-                                <span className="bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400 px-2 py-1 rounded-full font-semibold">{clientes.filter(c => c.status === 'activo').length} activos</span>
-                                <span className="bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400 px-2 py-1 rounded-full font-semibold">{clientes.filter(c => c.status === 'en_mora').length} en mora</span>
+                            <div className="flex items-center gap-3">
+                                {/* Sub-selector Pipeline / Lista */}
+                                <div className="flex bg-muted rounded-lg p-0.5 border border-border/50">
+                                    <button
+                                        onClick={() => setClienteViewMode('pipeline')}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${clienteViewMode === 'pipeline'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                    >
+                                        <FiGrid className="w-3.5 h-3.5" /> Pipeline
+                                    </button>
+                                    <button
+                                        onClick={() => setClienteViewMode('lista')}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${clienteViewMode === 'lista'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                            }`}
+                                    >
+                                        <FiList className="w-3.5 h-3.5" /> Lista
+                                    </button>
+                                </div>
+                                <div className="flex gap-2 text-xs">
+                                    <span className="bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400 px-2 py-1 rounded-full font-semibold">{clientes.filter(c => c.status === 'activo').length} activos</span>
+                                    <span className="bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400 px-2 py-1 rounded-full font-semibold">{clientes.filter(c => c.status === 'en_mora').length} en mora</span>
+                                </div>
                             </div>
                         </div>
 
@@ -852,9 +881,82 @@ export default function AdminDashboard() {
                                 <p className="font-medium text-muted-foreground">No hay clientes aún</p>
                                 <p className="text-sm text-muted-foreground/60 mt-1">Convierte una solicitud atendida en cliente usando el botón <strong>"Convertir a Cliente"</strong></p>
                             </div>
-                        ) : (
+                        ) : clienteViewMode === 'lista' ? (
+                            /* ── VISTA LISTA ── */
                             <div className="flex gap-4">
-                                {/* Pipeline */}
+                                <div className="flex-1 overflow-x-auto bg-card border border-border rounded-xl">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                                <th className="text-left px-4 py-3">Cliente</th>
+                                                <th className="text-left px-4 py-3">Proyecto</th>
+                                                <th className="text-left px-4 py-3">Estado</th>
+                                                <th className="text-right px-4 py-3">Precio</th>
+                                                <th className="text-right px-4 py-3">Mensualidad</th>
+                                                <th className="text-center px-4 py-3">Mes actual</th>
+                                                <th className="text-left px-4 py-3">Email</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {clientes.map(cl => {
+                                                const statusColors: Record<string, string> = {
+                                                    activo: 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400',
+                                                    en_mora: 'bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400',
+                                                    pausado: 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400',
+                                                    terminado: 'bg-muted text-muted-foreground',
+                                                };
+                                                const statusLabel: Record<string, string> = {
+                                                    activo: 'Activo', en_mora: 'En Mora', pausado: 'Pausado', terminado: 'Terminado',
+                                                };
+                                                const mesActual = pagosCliente.find(p =>
+                                                    selectedCliente?.id === cl.id &&
+                                                    p.mes === new Date().getMonth() + 1 &&
+                                                    p.anio === new Date().getFullYear()
+                                                );
+                                                return (
+                                                    <tr
+                                                        key={cl.id}
+                                                        onClick={() => handleSelectCliente(cl)}
+                                                        className={`border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors ${selectedCliente?.id === cl.id ? 'bg-primary/5' : ''}`}
+                                                    >
+                                                        <td className="px-4 py-3 font-semibold">{cl.nombre}</td>
+                                                        <td className="px-4 py-3 text-muted-foreground max-w-[180px] truncate">{cl.proyecto}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[cl.status] ?? 'bg-muted text-muted-foreground'}`}>
+                                                                {statusLabel[cl.status] ?? cl.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-mono font-semibold text-green-600">
+                                                            {cl.precioCobrado ? `$${cl.precioCobrado.toLocaleString()}` : '—'}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-mono font-semibold text-blue-600">
+                                                            {cl.mensualidadMonto ? `$${cl.mensualidadMonto.toLocaleString()}/mes` : '—'}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {!cl.mensualidadMonto ? (
+                                                                <span className="text-xs text-muted-foreground">N/A</span>
+                                                            ) : selectedCliente?.id !== cl.id ? (
+                                                                <span className="text-xs text-muted-foreground italic">Clic para ver</span>
+                                                            ) : mesActual ? (
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${mesActual.pagado ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                                    {mesActual.pagado ? '✓ Pagado' : '⏳ Pendiente'}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-muted-foreground">Cargando...</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-[160px]">{cl.correo ?? '—'}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </div>
+                        ) : (
+                            /* ── VISTA PIPELINE ── */
+                            <div className="flex gap-4">
                                 <div className="flex-1 overflow-hidden">
                                     <ClientePipeline
                                         clientes={clientes}
@@ -864,7 +966,6 @@ export default function AdminDashboard() {
                                     />
                                 </div>
 
-                                {/* Panel lateral cliente */}
                                 {selectedCliente && (
                                     <div className="w-80 flex-shrink-0 bg-card border border-border rounded-xl p-4 space-y-4 overflow-y-auto max-h-[70vh]">
                                         <div>
@@ -891,34 +992,24 @@ export default function AdminDashboard() {
                                                 {selectedCliente.correo && <a href={`mailto:${selectedCliente.correo}`} className="text-primary hover:underline truncate">{selectedCliente.correo}</a>}
                                             </div>
                                         </div>
-
-                                        {/* Historial de pagos */}
                                         <div>
                                             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Historial de Mensualidades</p>
                                             {!selectedCliente.mensualidadMonto ? (
-                                                <p className="text-xs text-muted-foreground italic">Este cliente no tiene mensualidad de mantenimiento.</p>
+                                                <p className="text-xs text-muted-foreground italic">Sin mensualidad.</p>
                                             ) : pagosCliente.length === 0 ? (
-                                                <p className="text-xs text-muted-foreground">Cargando pagos...</p>
+                                                <p className="text-xs text-muted-foreground">Cargando...</p>
                                             ) : (
                                                 <div className="space-y-2">
                                                     {pagosCliente.map(pago => {
                                                         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
                                                         return (
-                                                            <div key={pago.id} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${pago.pagado
-                                                                ? 'bg-green-50 dark:bg-green-950/20 border-green-200/60 text-green-800 dark:text-green-300'
-                                                                : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 text-amber-800 dark:text-amber-300'
-                                                                }`}>
+                                                            <div key={pago.id} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${pago.pagado ? 'bg-green-50 dark:bg-green-950/20 border-green-200/60 text-green-800 dark:text-green-300' : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 text-amber-800 dark:text-amber-300'}`}>
                                                                 <div>
                                                                     <p className="font-semibold">{meses[pago.mes - 1]} {pago.anio}</p>
                                                                     <p className="text-[10px] opacity-70">${pago.monto.toLocaleString()} MXN</p>
                                                                 </div>
-                                                                <button
-                                                                    onClick={() => marcarPagado(selectedCliente.id, pago, !pago.pagado)}
-                                                                    className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[10px] transition-colors ${pago.pagado
-                                                                        ? 'bg-green-600 text-white hover:bg-green-700'
-                                                                        : 'bg-amber-500 text-white hover:bg-amber-600'
-                                                                        }`}
-                                                                >
+                                                                <button onClick={() => marcarPagado(selectedCliente.id, pago, !pago.pagado)}
+                                                                    className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[10px] transition-colors ${pago.pagado ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-amber-500 text-white hover:bg-amber-600'}`}>
                                                                     {pago.pagado ? <><FiCheckCircle className="w-3 h-3" /> Pagado</> : <><FiXCircle className="w-3 h-3" /> Pendiente</>}
                                                                 </button>
                                                             </div>

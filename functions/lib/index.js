@@ -38,16 +38,52 @@ const https_1 = require("firebase-functions/v2/https");
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const nodeHttps = __importStar(require("https"));
+const crypto = __importStar(require("crypto"));
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN ?? '';
+const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET ?? '';
 /**
- * Webhook de MercadoPago — recibe notificaciones IPN de pagos.
+ * Verifica la firma HMAC-SHA256 de MercadoPago.
+ * Docs: https://www.mercadopago.com/developers/es/docs/your-integrations/notifications/webhooks
+ */
+function verifySignature(req) {
+    if (!MP_WEBHOOK_SECRET)
+        return true; // Si no está configurada, no bloquear
+    const xSignature = req.headers['x-signature'];
+    const xRequestId = req.headers['x-request-id'];
+    const dataId = req.query['data.id'];
+    if (!xSignature || !dataId)
+        return true; // Notificación de prueba / ping
+    // Parsear ts y v1 de "ts=...,v1=..."
+    const parts = {};
+    xSignature.split(',').forEach(part => {
+        const [k, v] = part.split('=');
+        if (k && v)
+            parts[k.trim()] = v.trim();
+    });
+    const ts = parts['ts'];
+    const v1 = parts['v1'];
+    if (!ts || !v1)
+        return false;
+    // Construir el template para el HMAC
+    const template = `id:${dataId};request-id:${xRequestId ?? ''};ts:${ts};`;
+    const computed = crypto.createHmac('sha256', MP_WEBHOOK_SECRET).update(template).digest('hex');
+    return crypto.timingSafeEqual(Buffer.from(computed, 'hex'), Buffer.from(v1, 'hex'));
+}
+/**
+ * Webhook de MercadoPago — recibe notificaciones de pagos.
  * URL: https://us-central1-missolucionesia.cloudfunctions.net/mpWebhook
  */
 exports.mpWebhook = (0, https_1.onRequest)({ region: 'us-central1', cors: false, invoker: 'public' }, async (req, res) => {
     if (req.method !== 'POST') {
         res.status(405).send('Method Not Allowed');
+        return;
+    }
+    // Verificar firma de MercadoPago
+    if (!verifySignature(req)) {
+        console.warn('Firma inválida — solicitud rechazada');
+        res.status(401).send('Unauthorized');
         return;
     }
     try {
@@ -58,7 +94,7 @@ exports.mpWebhook = (0, https_1.onRequest)({ region: 'us-central1', cors: false,
             res.status(200).send('ok');
             return;
         }
-        // Consultar MP API
+        // Consultar detalle del pago en MP
         const payment = await new Promise((resolve, reject) => {
             const options = {
                 hostname: 'api.mercadopago.com',
@@ -85,7 +121,7 @@ exports.mpWebhook = (0, https_1.onRequest)({ region: 'us-central1', cors: false,
             return;
         }
         const extRef = String(payment['external_reference'] ?? '');
-        // FORMATO 1: cotizacionId (pago inicial del proyecto)
+        // ── FORMATO 1: cotizacionId (pago inicial del proyecto) ──────────
         if (extRef && !extRef.includes(':')) {
             const cotizRef = db.collection('cotizaciones').doc(extRef);
             const cotiz = await cotizRef.get();
@@ -96,10 +132,10 @@ exports.mpWebhook = (0, https_1.onRequest)({ region: 'us-central1', cors: false,
                     pagoId: paymentId,
                     pagoMonto: payment['transaction_amount'] ?? null,
                 });
-                console.log(`✅ Cotización ${extRef} marcada como PAGADA`);
+                console.log(`✅ Cotización ${extRef} PAGADA`);
             }
         }
-        // FORMATO 2: clienteId:mes:anio (mensualidad de mantenimiento)
+        // ── FORMATO 2: clienteId:mes:anio (mensualidad de mantenimiento) ─
         if (extRef && extRef.includes(':')) {
             const [clienteId, mesStr, anioStr] = extRef.split(':');
             const mes = parseInt(mesStr ?? '', 10);
@@ -120,7 +156,8 @@ exports.mpWebhook = (0, https_1.onRequest)({ region: 'us-central1', cors: false,
                 }
                 else {
                     const clienteSnap = await db.collection('clientes').doc(clienteId).get();
-                    const monto = clienteSnap.data()?.['mensualidadMonto'] ?? payment['transaction_amount'] ?? 0;
+                    const monto = clienteSnap.data()?.['mensualidadMonto']
+                        ?? payment['transaction_amount'] ?? 0;
                     await db.collection('clientes').doc(clienteId).collection('pagos').add({
                         mes, anio, monto, pagado: true,
                         fechaPago: firestore_1.FieldValue.serverTimestamp(),
@@ -134,7 +171,7 @@ exports.mpWebhook = (0, https_1.onRequest)({ region: 'us-central1', cors: false,
     }
     catch (err) {
         console.error('Error en webhook MP:', err);
-        res.status(200).send('ok');
+        res.status(200).send('ok'); // Siempre 200 para evitar reintentos infinitos de MP
     }
 });
 //# sourceMappingURL=index.js.map

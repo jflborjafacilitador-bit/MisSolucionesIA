@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, orderBy, query, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, orderBy, query, setDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { db } from '../lib/firebase';
 import AIAnalisis from '../components/AIAnalisis';
-import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw } from 'react-icons/fi';
+import ClientePipeline, { Cliente, ClienteStatus } from '../components/ClientePipeline';
+import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw, FiUserCheck, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { createMPPreference } from '../lib/mercadopago';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -40,7 +41,16 @@ interface Partner {
     partnerCode?: string | null;
 }
 
-type ActiveTab = 'solicitudes' | 'partners' | 'referidos' | 'facturacion';
+type ActiveTab = 'solicitudes' | 'clientes' | 'partners' | 'referidos' | 'facturacion';
+
+interface Pago {
+    id: string;
+    mes: number;
+    anio: number;
+    monto: number;
+    pagado: boolean;
+    fechaPago?: any;
+}
 
 const FIREBASE_API_KEY = 'AIzaSyCgPww2i15SPqZncEdWbQaFmN8HpY2CUt0';
 
@@ -67,6 +77,12 @@ export default function AdminDashboard() {
     const [invitePhone, setInvitePhone] = useState('');
     const [inviteName, setInviteName] = useState('');
     const [inviting, setInviting] = useState(false);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
+    const [pagosCliente, setPagosCliente] = useState<Pago[]>([]);
+    const [showConvertirModal, setShowConvertirModal] = useState(false);
+    const [convertirFecha, setConvertirFecha] = useState('');
+    const [convertirLoading, setConvertirLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -78,7 +94,7 @@ export default function AdminDashboard() {
 
     const fetchAll = async () => {
         setDataLoading(true);
-        await Promise.all([fetchCotizaciones(), fetchPartners()]);
+        await Promise.all([fetchCotizaciones(), fetchPartners(), fetchClientes()]);
         setDataLoading(false);
     };
 
@@ -95,6 +111,81 @@ export default function AdminDashboard() {
                 .map(d => ({ id: d.id, ...d.data() } as Partner))
                 .filter(u => !('isAdmin' in u && (u as any).isAdmin))
         );
+    };
+
+    const fetchClientes = async () => {
+        const snap = await getDocs(collection(db, 'clientes'));
+        setClientes(snap.docs.map(d => ({ id: d.id, ...d.data() } as Cliente)));
+    };
+
+    // Asegura que exista el pago del mes actual para un cliente
+    const ensurePagoMesActual = async (cliente: Cliente) => {
+        const hoy = new Date();
+        const mes = hoy.getMonth() + 1;
+        const anio = hoy.getFullYear();
+        const pagosSnap = await getDocs(collection(db, 'clientes', cliente.id, 'pagos'));
+        const pagos = pagosSnap.docs.map(d => ({ id: d.id, ...d.data() } as Pago));
+        const existeMes = pagos.find(p => p.mes === mes && p.anio === anio);
+        if (!existeMes && cliente.mensualidadMonto) {
+            const ref = await addDoc(collection(db, 'clientes', cliente.id, 'pagos'), {
+                mes, anio, monto: cliente.mensualidadMonto, pagado: false
+            });
+            pagos.push({ id: ref.id, mes, anio, monto: cliente.mensualidadMonto, pagado: false });
+        }
+        setPagosCliente(pagos.sort((a, b) => (b.anio * 12 + b.mes) - (a.anio * 12 + a.mes)));
+    };
+
+    const handleSelectCliente = async (c: Cliente) => {
+        setSelectedCliente(c);
+        setPagosCliente([]);
+        await ensurePagoMesActual(c);
+    };
+
+    const marcarPagado = async (clienteId: string, pago: Pago, pagado: boolean) => {
+        await updateDoc(doc(db, 'clientes', clienteId, 'pagos', pago.id), {
+            pagado,
+            fechaPago: pagado ? Timestamp.now() : null
+        });
+        setPagosCliente(prev => prev.map(p => p.id === pago.id ? { ...p, pagado, fechaPago: pagado ? new Date() : null } : p));
+        toast.success(pagado ? 'Pago registrado ✓' : 'Pago desmarcado');
+    };
+
+    const actualizarStatusCliente = async (id: string, status: ClienteStatus) => {
+        await updateDoc(doc(db, 'clientes', id), { status });
+        setClientes(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+        if (selectedCliente?.id === id) setSelectedCliente(prev => prev ? { ...prev, status } : null);
+        toast.success('Estado actualizado.');
+    };
+
+    const convertirACliente = async () => {
+        if (!selected || !convertirFecha) return;
+        setConvertirLoading(true);
+        try {
+            const nuevoId = doc(collection(db, 'clientes')).id;
+            const nuevoCliente: Omit<Cliente, 'id'> = {
+                nombre: selected.nombre,
+                correo: selected.correo,
+                telefono: selected.telefono,
+                proyecto: selected.proyecto,
+                precioCobrado: selected.precioCotizado ?? null,
+                mensualidadMonto: selected.mensualidadMantenimiento ?? null,
+                fechaInicio: Timestamp.fromDate(new Date(convertirFecha + 'T12:00:00')),
+                cotizacionId: selected.id,
+                status: 'activo',
+                notasAdmin: selected.notasAdmin ?? null,
+                referralCodeUsed: selected.referralCodeUsed ?? null,
+            };
+            await setDoc(doc(db, 'clientes', nuevoId), nuevoCliente);
+            await updateDoc(doc(db, 'cotizaciones', selected.id), { convertidoACliente: true });
+            setClientes(prev => [...prev, { id: nuevoId, ...nuevoCliente }]);
+            setShowConvertirModal(false);
+            setActiveTab('clientes');
+            toast.success(`✓ ${selected.nombre} ahora es cliente activo`);
+        } catch (e) {
+            toast.error('Error al convertir. Intenta de nuevo.');
+        } finally {
+            setConvertirLoading(false);
+        }
     };
 
     const statusConfig: Record<CotizacionStatus, { label: string; color: string; dot: string }> = {
@@ -414,6 +505,7 @@ export default function AdminDashboard() {
 
     const tabs: { key: ActiveTab; label: string; icon: React.ReactNode }[] = [
         { key: 'solicitudes', label: 'Solicitudes', icon: <FiMail className="w-4 h-4" /> },
+        { key: 'clientes', label: 'Clientes', icon: <FiUserCheck className="w-4 h-4" /> },
         { key: 'partners', label: 'Partners', icon: <FiUsers className="w-4 h-4" /> },
         { key: 'referidos', label: 'Referidos', icon: <FiBarChart2 className="w-4 h-4" /> },
         { key: 'facturacion', label: 'Facturación', icon: <FiDollarSign className="w-4 h-4" /> },
@@ -711,6 +803,22 @@ export default function AdminDashboard() {
                                                 )}
 
                                                 <AIAnalisis data={{ nombre: selected.nombre, proyecto: selected.proyecto, presupuesto: selected.presupuesto, descripcion: selected.descripcion }} />
+
+                                                {/* Botón Convertir a Cliente */}
+                                                {selected.status === 'atendida' && selected.precioCotizado && (
+                                                    <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-4 flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-bold text-green-700 dark:text-green-400">¿Listo para formalizar?</p>
+                                                            <p className="text-xs text-muted-foreground">Convierte esta solicitud en un cliente activo del CRM</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => { setConvertirFecha(''); setShowConvertirModal(true); }}
+                                                            className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                                                        >
+                                                            <FiUserCheck className="w-4 h-4" /> Convertir a Cliente
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="h-full min-h-[400px] flex items-center justify-center border border-dashed border-border rounded-xl bg-card">
@@ -723,6 +831,108 @@ export default function AdminDashboard() {
                         </>
                     );
                 })()}
+
+                {/* ======= TAB: CLIENTES ======= */}
+                {activeTab === 'clientes' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="font-semibold text-lg">CRM — Clientes Activos</h2>
+                                <p className="text-sm text-muted-foreground">Pipeline de clientes con seguimiento de mensualidades. Arrastra para cambiar estado.</p>
+                            </div>
+                            <div className="flex gap-2 text-xs">
+                                <span className="bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400 px-2 py-1 rounded-full font-semibold">{clientes.filter(c => c.status === 'activo').length} activos</span>
+                                <span className="bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400 px-2 py-1 rounded-full font-semibold">{clientes.filter(c => c.status === 'en_mora').length} en mora</span>
+                            </div>
+                        </div>
+
+                        {clientes.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border rounded-xl text-center">
+                                <FiUserCheck className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                                <p className="font-medium text-muted-foreground">No hay clientes aún</p>
+                                <p className="text-sm text-muted-foreground/60 mt-1">Convierte una solicitud atendida en cliente usando el botón <strong>"Convertir a Cliente"</strong></p>
+                            </div>
+                        ) : (
+                            <div className="flex gap-4">
+                                {/* Pipeline */}
+                                <div className="flex-1 overflow-hidden">
+                                    <ClientePipeline
+                                        clientes={clientes}
+                                        selectedId={selectedCliente?.id}
+                                        onSelect={handleSelectCliente}
+                                        onStatusChange={actualizarStatusCliente}
+                                    />
+                                </div>
+
+                                {/* Panel lateral cliente */}
+                                {selectedCliente && (
+                                    <div className="w-80 flex-shrink-0 bg-card border border-border rounded-xl p-4 space-y-4 overflow-y-auto max-h-[70vh]">
+                                        <div>
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <p className="font-bold text-base">{selectedCliente.nombre}</p>
+                                                    <p className="text-xs text-muted-foreground">{selectedCliente.proyecto}</p>
+                                                </div>
+                                                <button onClick={() => setSelectedCliente(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {selectedCliente.precioCobrado && (
+                                                    <span className="text-xs bg-green-50 text-green-700 dark:bg-green-950/20 border border-green-200/50 px-2 py-0.5 rounded-full font-semibold">
+                                                        Proyecto: ${selectedCliente.precioCobrado.toLocaleString()}
+                                                    </span>
+                                                )}
+                                                {selectedCliente.mensualidadMonto && (
+                                                    <span className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-950/20 border border-blue-200/50 px-2 py-0.5 rounded-full font-semibold">
+                                                        ${selectedCliente.mensualidadMonto.toLocaleString()}/mes
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-1.5 mt-2 text-xs">
+                                                {selectedCliente.correo && <a href={`mailto:${selectedCliente.correo}`} className="text-primary hover:underline truncate">{selectedCliente.correo}</a>}
+                                            </div>
+                                        </div>
+
+                                        {/* Historial de pagos */}
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Historial de Mensualidades</p>
+                                            {!selectedCliente.mensualidadMonto ? (
+                                                <p className="text-xs text-muted-foreground italic">Este cliente no tiene mensualidad de mantenimiento.</p>
+                                            ) : pagosCliente.length === 0 ? (
+                                                <p className="text-xs text-muted-foreground">Cargando pagos...</p>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {pagosCliente.map(pago => {
+                                                        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                                        return (
+                                                            <div key={pago.id} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${pago.pagado
+                                                                ? 'bg-green-50 dark:bg-green-950/20 border-green-200/60 text-green-800 dark:text-green-300'
+                                                                : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 text-amber-800 dark:text-amber-300'
+                                                                }`}>
+                                                                <div>
+                                                                    <p className="font-semibold">{meses[pago.mes - 1]} {pago.anio}</p>
+                                                                    <p className="text-[10px] opacity-70">${pago.monto.toLocaleString()} MXN</p>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => marcarPagado(selectedCliente.id, pago, !pago.pagado)}
+                                                                    className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[10px] transition-colors ${pago.pagado
+                                                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                                                        : 'bg-amber-500 text-white hover:bg-amber-600'
+                                                                        }`}
+                                                                >
+                                                                    {pago.pagado ? <><FiCheckCircle className="w-3 h-3" /> Pagado</> : <><FiXCircle className="w-3 h-3" /> Pendiente</>}
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* ======= TAB: PARTNERS ======= */}
                 {activeTab === 'partners' && (
@@ -1075,6 +1285,56 @@ export default function AdminDashboard() {
                     </div>
                 )
             }
+            {/* ======= MODAL: CONVERTIR A CLIENTE ======= */}
+            {showConvertirModal && selected && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+                        <div>
+                            <h3 className="font-bold text-lg">Convertir a Cliente</h3>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                <strong>{selected.nombre}</strong> — {selected.proyecto}
+                            </p>
+                        </div>
+
+                        <div className="bg-muted/30 rounded-lg p-3 space-y-1 text-xs">
+                            {selected.precioCotizado && (
+                                <div className="flex justify-between"><span className="text-muted-foreground">Precio del proyecto</span><span className="font-semibold text-green-600">${selected.precioCotizado.toLocaleString()} MXN</span></div>
+                            )}
+                            {selected.mensualidadMantenimiento && (
+                                <div className="flex justify-between"><span className="text-muted-foreground">Mensualidad mantenimiento</span><span className="font-semibold text-blue-600">${selected.mensualidadMantenimiento.toLocaleString()} MXN/mes</span></div>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                                Fecha de inicio del contrato *
+                            </label>
+                            <input
+                                type="date"
+                                value={convertirFecha}
+                                onChange={e => setConvertirFecha(e.target.value)}
+                                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                            <button
+                                onClick={() => setShowConvertirModal(false)}
+                                className="flex-1 border border-border rounded-lg py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={convertirACliente}
+                                disabled={!convertirFecha || convertirLoading}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                            >
+                                {convertirLoading ? 'Procesando...' : <><FiUserCheck className="w-4 h-4" /> Confirmar</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

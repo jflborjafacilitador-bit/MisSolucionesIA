@@ -38,5 +38,16 @@ service cloud.firestore {
         myProfile().isAdmin == true
       );
     }
+
+    // ===== CLIENTES =====
+    // Solo admins pueden gestionar clientes y sus pagos
+    match /clientes/{clienteId} {
+      allow read, write: if request.auth != null &&
+        myProfile().isAdmin == true;
+    }
+    match /clientes/{clienteId}/pagos/{pagoId} {
+      allow read, write: if request.auth != null &&
+        myProfile().isAdmin == true;
+    }
   }
 }

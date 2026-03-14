@@ -3,20 +3,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper: obtener el perfil del usuario autenticado
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     // ===== COTIZACIONES =====
-    // Cualquiera puede crear una cotización (formulario público)
-    // Solo usuarios autenticados pueden leer/actualizar/eliminar
+    // Cualquiera puede crear (formulario público de cotización)
+    // Admins: lectura y escritura completa
+    // Partners: solo pueden leer las cotizaciones que tienen su código referral
     match /cotizaciones/{docId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
+
+      allow read: if request.auth != null && (
+        myProfile().isAdmin == true ||
+        (myProfile().isPartner == true &&
+         resource.data.referralCodeUsed == myProfile().partnerCode)
+      );
+
+      allow update, delete: if request.auth != null &&
+        myProfile().isAdmin == true;
     }
 
     // ===== USUARIOS / PERFILES =====
     // El propio usuario puede leer su perfil
-    // Solo admins (marcados en Firestore) pueden crear/modificar perfiles
+    // Solo admins pueden escribir perfiles de usuario
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && (
+        request.auth.uid == userId ||
+        myProfile().isAdmin == true
+      );
     }
   }
 }

@@ -26,6 +26,7 @@ interface Cotizacion {
     referralCodeUsed?: string | null;
     status: CotizacionStatus;
     precioCotizado?: number | null;
+    mensualidadMantenimiento?: number | null;
     notasAdmin?: string | null;
     linkPago?: string | null;
 }
@@ -44,7 +45,7 @@ type ActiveTab = 'solicitudes' | 'partners' | 'referidos' | 'facturacion';
 const FIREBASE_API_KEY = 'AIzaSyCgPww2i15SPqZncEdWbQaFmN8HpY2CUt0';
 
 export default function AdminDashboard() {
-    const { user, loading: authLoading, logout } = useAuth();
+    const { user, isAdmin, loading: authLoading, logout } = useAuth();
     const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
     const [partners, setPartners] = useState<Partner[]>([]);
     const [dataLoading, setDataLoading] = useState(true);
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<CotizacionStatus | 'todas'>('todas');
     const [priceInput, setPriceInput] = useState('');
+    const [mensualidadInput, setMensualidadInput] = useState('');
     const [notasInput, setNotasInput] = useState('');
     const [generatingLink, setGeneratingLink] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -70,8 +72,9 @@ export default function AdminDashboard() {
     useEffect(() => {
         if (authLoading) return;
         if (!user) { navigate('/login'); return; }
+        if (!isAdmin) { navigate('/partner'); return; }  // B2: partner no puede acceder al admin
         fetchAll();
-    }, [user, authLoading, navigate]);
+    }, [user, isAdmin, authLoading, navigate]);
 
     const fetchAll = async () => {
         setDataLoading(true);
@@ -274,6 +277,12 @@ export default function AdminDashboard() {
         addClause('8', 'JURISDICCIÓN',
             `Para cualquier controversia derivada del presente acuerdo, las partes se someten a las leyes aplicables de los Estados Unidos Mexicanos, renunciando a cualquier otro fuero que pudiera corresponderles por razón de sus domicilios presentes o futuros.`);
 
+        // C4: Cláusula de mantenimiento mensual (solo si se estableció mensualidad)
+        if (selected.mensualidadMantenimiento) {
+            addClause('9', 'SERVICIO DE MANTENIMIENTO MENSUAL',
+                `El Proveedor prestará servicios de mantenimiento mensual por un monto de $${selected.mensualidadMantenimiento.toLocaleString(undefined, { minimumFractionDigits: 2 })} MXN al mes. Este servicio incluye: corrección de errores menores, actualizaciones de seguridad, respaldo de información y soporte por correo electrónico a través de soporte@missolucionesia.com. El servicio de mantenimiento iniciará a partir del mes siguiente a la entrega oficial del proyecto y podrá cancelarse por cualquiera de las partes con un aviso previo mínimo de 30 días naturales por escrito.`);
+        }
+
         // ── SIGNATURES ────────────────────────────────────────────────
         if (y > 245) { pdf.addPage(); y = 20; }
         y += 6;
@@ -415,7 +424,7 @@ export default function AdminDashboard() {
             <div className="bg-background border-b border-border shadow-sm">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                             Admin Dashboard
                             <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                                 v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
@@ -424,8 +433,14 @@ export default function AdminDashboard() {
                                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
                                 Online
                             </span>
+                            {/* A1: Identificador de usuario logueado */}
+                            {user?.email && (
+                                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                    👤 {user.email}
+                                </span>
+                            )}
                         </h1>
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex gap-1 mt-2 flex-wrap">
                             {tabs.map(tab => (
                                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                                     className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${activeTab === tab.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
@@ -434,9 +449,19 @@ export default function AdminDashboard() {
                             ))}
                         </div>
                     </div>
-                    <button onClick={() => { logout(); navigate('/'); }} className="text-sm flex items-center gap-2 text-destructive hover:text-destructive/80 font-medium">
-                        <FiLogOut /> Cerrar Sesión
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {/* A2: Botón de actualización manual */}
+                        <button
+                            onClick={fetchAll}
+                            title="Actualizar datos"
+                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                            <FiRefreshCw className="w-3.5 h-3.5" /> Actualizar
+                        </button>
+                        <button onClick={() => { logout(); navigate('/'); }} className="text-sm flex items-center gap-2 text-destructive hover:text-destructive/80 font-medium">
+                            <FiLogOut /> Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -506,7 +531,7 @@ export default function AdminDashboard() {
                                                 const st = statusConfig[c.status || 'por_atender'];
                                                 return (
                                                     <div key={c.id} className={`flex items-center gap-2 rounded-lg border transition-colors ${selected?.id === c.id ? 'bg-primary/10 border-primary/30' : 'bg-background border-transparent hover:bg-muted/50 hover:border-border'}`}>
-                                                        <button onClick={() => { setSelected(c); setPriceInput(String(c.precioCotizado ?? '')); setNotasInput(c.notasAdmin ?? ''); }}
+                                                        <button onClick={() => { setSelected(c); setPriceInput(String(c.precioCotizado ?? '')); setMensualidadInput(String(c.mensualidadMantenimiento ?? '')); setNotasInput(c.notasAdmin ?? ''); }}
                                                             className="flex-1 text-left p-3 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
                                                                 <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${st?.color}`}>
@@ -563,7 +588,7 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
 
-                                                {/* Price + Notes */}
+                                                {/* Price + Mensualidad + Notes */}
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="bg-background border border-border rounded-xl p-4">
                                                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Precio Cotizado (MXN)</p>
@@ -577,12 +602,24 @@ export default function AdminDashboard() {
                                                         </div>
                                                         {selected.precioCotizado && <p className="text-2xl font-black text-green-600 mt-2">${selected.precioCotizado.toLocaleString()}</p>}
                                                     </div>
-                                                    <div className="bg-background border border-border rounded-xl p-4">
-                                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Notas del Admin</p>
-                                                        <textarea rows={3} placeholder="Notas internas..." value={notasInput} onChange={e => setNotasInput(e.target.value)}
-                                                            onBlur={() => updateCotizacion(selected.id, { notasAdmin: notasInput })}
-                                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" />
+                                                    <div className="bg-background border border-blue-500/20 rounded-xl p-4">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-blue-600/80 mb-2">Mensualidad Mantenimiento (MXN/mes)</p>
+                                                        <div className="flex gap-2">
+                                                            <input type="number" placeholder="0.00" value={mensualidadInput} onChange={e => setMensualidadInput(e.target.value)}
+                                                                className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                                            <button onClick={() => updateCotizacion(selected.id, { mensualidadMantenimiento: mensualidadInput ? parseFloat(mensualidadInput) : null })}
+                                                                className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700">
+                                                                <FiSave className="w-3.5 h-3.5" /> Guardar
+                                                            </button>
+                                                        </div>
+                                                        {selected.mensualidadMantenimiento && <p className="text-xl font-black text-blue-600 mt-2">${selected.mensualidadMantenimiento.toLocaleString()}<span className="text-sm font-normal">/mes</span></p>}
                                                     </div>
+                                                </div>
+                                                <div className="bg-background border border-border rounded-xl p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Notas del Admin</p>
+                                                    <textarea rows={3} placeholder="Notas internas..." value={notasInput} onChange={e => setNotasInput(e.target.value)}
+                                                        onBlur={() => updateCotizacion(selected.id, { notasAdmin: notasInput })}
+                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" />
                                                 </div>
 
                                                 {/* Contact */}
@@ -822,6 +859,8 @@ export default function AdminDashboard() {
                     const totalFacturado = atendidas.reduce((sum, c) => sum + (c.precioCotizado || 0), 0);
                     const totalPendiente = cotizaciones.filter(c => (c.status === 'por_atender' || c.status === 'en_proceso') && c.precioCotizado).reduce((sum, c) => sum + (c.precioCotizado || 0), 0);
                     const cotizadasConPrecio = cotizaciones.filter(c => c.precioCotizado);
+                    // C5: MRR — suma de mensualidades de contratos atendidos
+                    const mrr = cotizaciones.filter(c => c.mensualidadMantenimiento).reduce((sum, c) => sum + (c.mensualidadMantenimiento || 0), 0);
                     return (
                         <div className="max-w-4xl mx-auto space-y-6">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -843,6 +882,16 @@ export default function AdminDashboard() {
                                     <p className="text-3xl font-black mt-1">{cotizadasConPrecio.length}</p>
                                 </div>
                             </div>
+                            {/* C5: KPI de Ingresos Recurrentes Mensuales */}
+                            {mrr > 0 && (
+                                <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/30 rounded-xl p-5 shadow-sm flex items-center justify-between">
+                                    <div>
+                                        <p className="text-xs text-blue-600 uppercase tracking-wider font-semibold">MRR — Ingresos Recurrentes Mensuales</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">Suma de mensualidades de mantenimiento activas</p>
+                                    </div>
+                                    <p className="text-3xl font-black text-blue-600">${mrr.toLocaleString()}<span className="text-base font-normal">/mes</span></p>
+                                </div>
+                            )}
 
                             {/* ===== MONTHLY REVENUE CHART ===== */}
                             {(() => {
@@ -991,6 +1040,13 @@ export default function AdminDashboard() {
                                 <strong>Vista previa del cobro:</strong><br />
                                 <span className="font-medium text-foreground">{paymentTitle || '(sin concepto)'}</span> — <span className="text-green-600 font-bold">${parseFloat(paymentAmount || '0').toLocaleString()} MXN</span>
                             </div>
+                            {/* C3: Mostrar mensualidad en el modal de cobro */}
+                            {selected?.mensualidadMantenimiento && (
+                                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-3 text-xs flex items-center justify-between">
+                                    <span className="text-blue-700 dark:text-blue-400">📅 Mantenimiento mensual incluido en contrato:</span>
+                                    <span className="text-blue-600 font-black text-sm">${selected.mensualidadMantenimiento.toLocaleString()} MXN/mes</span>
+                                </div>
+                            )}
 
                             <div className="flex gap-2 pt-1 flex-wrap">
                                 <button

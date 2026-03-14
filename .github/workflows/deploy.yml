@@ -40,3 +40,13 @@ jobs:
           target: /home/u998920878/domains/missolucionesia.com/public_html/
           strip_components: 1
           rm: true
+
+      - name: Deploy Firestore Rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/firebase-service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-service-account.json
+          npx firebase-tools@latest deploy --only firestore:rules --project missolucionesia --non-interactive
+          rm /tmp/firebase-service-account.json
+

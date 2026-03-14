@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(firebaseUser);
             if (firebaseUser && lastUid.current !== firebaseUser.uid) {
                 lastUid.current = firebaseUser.uid;
+                setLoading(true); // Asegura que authLoading = true mientras carga el perfil
                 await loadProfile(firebaseUser.uid);
             } else if (!firebaseUser) {
                 lastUid.current = null;

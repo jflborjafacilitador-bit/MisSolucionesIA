@@ -84,6 +84,10 @@ export default function AdminDashboard() {
     const [convertirFecha, setConvertirFecha] = useState('');
     const [convertirLoading, setConvertirLoading] = useState(false);
     const [clienteViewMode, setClienteViewMode] = useState<'pipeline' | 'lista'>('pipeline');
+    const [showDeleteCliente, setShowDeleteCliente] = useState(false);
+    const [showEditCliente, setShowEditCliente] = useState(false);
+    const [editClienteData, setEditClienteData] = useState<Partial<Cliente>>({});
+    const [editLoading, setEditLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -186,6 +190,46 @@ export default function AdminDashboard() {
             toast.error('Error al convertir. Intenta de nuevo.');
         } finally {
             setConvertirLoading(false);
+        }
+    };
+    const eliminarCliente = async () => {
+        if (!selectedCliente) return;
+        try {
+            // Eliminar subcolección de pagos
+            const pagosSnap = await getDocs(collection(db, 'clientes', selectedCliente.id, 'pagos'));
+            await Promise.all(pagosSnap.docs.map(d => deleteDoc(d.ref)));
+            // Eliminar el cliente
+            await deleteDoc(doc(db, 'clientes', selectedCliente.id));
+            setClientes(prev => prev.filter(c => c.id !== selectedCliente.id));
+            setSelectedCliente(null);
+            setShowDeleteCliente(false);
+            toast.success('Cliente eliminado.');
+        } catch {
+            toast.error('Error al eliminar. Intenta de nuevo.');
+        }
+    };
+
+    const guardarEdicionCliente = async () => {
+        if (!selectedCliente) return;
+        setEditLoading(true);
+        try {
+            const updates: Partial<Cliente> = {
+                nombre: editClienteData.nombre ?? selectedCliente.nombre,
+                proyecto: editClienteData.proyecto ?? selectedCliente.proyecto,
+                correo: editClienteData.correo ?? selectedCliente.correo,
+                precioCobrado: editClienteData.precioCobrado !== undefined ? editClienteData.precioCobrado : selectedCliente.precioCobrado,
+                mensualidadMonto: editClienteData.mensualidadMonto !== undefined ? editClienteData.mensualidadMonto : selectedCliente.mensualidadMonto,
+            };
+            await updateDoc(doc(db, 'clientes', selectedCliente.id), updates);
+            const updated = { ...selectedCliente, ...updates };
+            setClientes(prev => prev.map(c => c.id === selectedCliente.id ? updated : c));
+            setSelectedCliente(updated);
+            setShowEditCliente(false);
+            toast.success('Cliente actualizado.');
+        } catch {
+            toast.error('Error al actualizar.');
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -970,12 +1014,81 @@ export default function AdminDashboard() {
                                     <div className="w-80 flex-shrink-0 bg-card border border-border rounded-xl p-4 space-y-4 overflow-y-auto max-h-[70vh]">
                                         <div>
                                             <div className="flex items-start justify-between">
-                                                <div>
-                                                    <p className="font-bold text-base">{selectedCliente.nombre}</p>
-                                                    <p className="text-xs text-muted-foreground">{selectedCliente.proyecto}</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-bold text-base truncate">{selectedCliente.nombre}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{selectedCliente.proyecto}</p>
                                                 </div>
-                                                <button onClick={() => setSelectedCliente(null)} className="text-muted-foreground hover:text-foreground text-xs">✕</button>
+                                                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                                                    <button
+                                                        onClick={() => { setEditClienteData({ ...selectedCliente }); setShowEditCliente(true); }}
+                                                        className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-md transition-colors"
+                                                        title="Editar cliente"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-1.414c0-.53.21-1.04.586-1.414z" /></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowDeleteCliente(true)}
+                                                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-colors"
+                                                        title="Eliminar cliente"
+                                                    >
+                                                        <FiTrash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button onClick={() => setSelectedCliente(null)} className="p-1.5 text-muted-foreground hover:text-foreground rounded-md text-xs">✕</button>
+                                                </div>
                                             </div>
+
+                                            {/* Modal eliminar */}
+                                            {showDeleteCliente && (
+                                                <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200/60 rounded-lg">
+                                                    <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2">¿Eliminar a <strong>{selectedCliente.nombre}</strong>? Esta acción no se puede deshacer.</p>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={eliminarCliente} className="flex-1 text-xs px-3 py-1.5 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition-colors">Sí, eliminar</button>
+                                                        <button onClick={() => setShowDeleteCliente(false)} className="flex-1 text-xs px-3 py-1.5 border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Modal editar */}
+                                            {showEditCliente && (
+                                                <div className="mt-3 p-3 bg-muted/40 border border-border rounded-lg space-y-2">
+                                                    <p className="text-xs font-bold text-foreground mb-1">Editar datos del cliente</p>
+                                                    {[
+                                                        { key: 'nombre', label: 'Nombre', type: 'text' },
+                                                        { key: 'proyecto', label: 'Proyecto', type: 'text' },
+                                                        { key: 'correo', label: 'Email', type: 'email' },
+                                                    ].map(({ key, label, type }) => (
+                                                        <div key={key}>
+                                                            <label className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</label>
+                                                            <input
+                                                                type={type}
+                                                                value={String(editClienteData[key as keyof Cliente] ?? '')}
+                                                                onChange={e => setEditClienteData(prev => ({ ...prev, [key]: e.target.value }))}
+                                                                className="w-full text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Precio ($)</label>
+                                                            <input type="number" value={editClienteData.precioCobrado ?? ''} onChange={e => setEditClienteData(prev => ({ ...prev, precioCobrado: e.target.value ? parseFloat(e.target.value) : null }))}
+                                                                className="w-full text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Mensualidad ($)</label>
+                                                            <input type="number" value={editClienteData.mensualidadMonto ?? ''} onChange={e => setEditClienteData(prev => ({ ...prev, mensualidadMonto: e.target.value ? parseFloat(e.target.value) : null }))}
+                                                                className="w-full text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2 pt-1">
+                                                        <button onClick={guardarEdicionCliente} disabled={editLoading}
+                                                            className="flex-1 flex items-center justify-center gap-1 text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                                                            <FiSave className="w-3 h-3" /> {editLoading ? 'Guardando...' : 'Guardar'}
+                                                        </button>
+                                                        <button onClick={() => setShowEditCliente(false)} className="flex-1 text-xs px-3 py-1.5 border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 {selectedCliente.precioCobrado && (
                                                     <span className="text-xs bg-green-50 text-green-700 dark:bg-green-950/20 border border-green-200/50 px-2 py-0.5 rounded-full font-semibold">

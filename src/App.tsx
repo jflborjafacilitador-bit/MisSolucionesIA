@@ -5,6 +5,7 @@ import CotizacionPage from './pages/CotizacionPage';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import PartnerDashboard from './pages/PartnerDashboard';
+import DemoDashboard from './pages/DemoDashboard';
 import { Toaster } from 'sonner';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/partner" element={<PartnerDashboard />} />
                 </Route>
+                <Route path="/demo/:id" element={<DemoDashboard />} />
             </Routes>
         </BrowserRouter>
     );

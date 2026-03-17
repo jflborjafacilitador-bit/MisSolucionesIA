@@ -3,7 +3,7 @@ import {
     FiPieChart, FiUsers, FiCalendar, FiDatabase,
     FiShoppingCart, FiBriefcase, FiHeadphones,
     FiTrendingUp, FiBox, FiBookOpen, FiArrowRight,
-    FiCheckCircle, FiSearch
+    FiCheckCircle, FiSearch, FiZap
 } from 'react-icons/fi';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -715,7 +715,10 @@ export default function LandingPage() {
                                                 </div>
 
                                                 {/* Overlay to drive users to quote */}
-                                                <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-auto">
+                                                <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-auto flex-col sm:flex-row gap-4 p-4">
+                                                    <Link to={`/demo/${activeTab}`} className="bg-background text-foreground border-2 border-primary px-6 py-3 rounded-full font-bold shadow-lg hover:bg-primary/10 transition-colors flex items-center gap-2">
+                                                        <FiZap className="text-primary" /> Probar Demo Interactiva
+                                                    </Link>
                                                     <Link to="/cotizacion" className="bg-primary text-primary-foreground px-6 py-3 rounded-full font-bold shadow-lg flex items-center gap-2 hover:scale-105 transition-transform">
                                                         Me interesa este proyecto <FiArrowRight />
                                                     </Link>

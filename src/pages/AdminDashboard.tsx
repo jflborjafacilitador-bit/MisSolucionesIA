@@ -1,21 +1,22 @@
-﻿import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, orderBy, query, setDoc, addDoc, Timestamp } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { collection, getDocs, doc, updateDoc, deleteDoc, orderBy, query, setDoc, addDoc, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { db } from '../lib/firebase';
 import AIAnalisis from '../components/AIAnalisis';
 import ClientePipeline, { Cliente, ClienteStatus } from '../components/ClientePipeline';
-import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw, FiUserCheck, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw, FiUserCheck, FiCheckCircle, FiXCircle, FiCpu } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { createMPPreference } from '../lib/mercadopago';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import KanbanBoard from '../components/KanbanBoard';
-import { FiList, FiGrid, FiFileText } from 'react-icons/fi';
+import { FiList, FiGrid, FiFileText, FiX, FiEdit2 } from 'react-icons/fi';
 import jsPDF from 'jspdf';
+import AIProposalsGenerator from '../components/AIProposalsGenerator';
+import MasterKanbanBoard from '../components/MasterKanbanBoard';
 
-type CotizacionStatus = 'por_atender' | 'en_proceso' | 'atendida' | 'descartada';
+export type CotizacionStatus = 'por_atender' | 'en_proceso' | 'atendida' | 'descartada';
 
-interface Cotizacion {
+export interface Cotizacion {
     id: string;
     nombre: string;
     telefono?: string;
@@ -30,6 +31,7 @@ interface Cotizacion {
     mensualidadMantenimiento?: number | null;
     notasAdmin?: string | null;
     linkPago?: string | null;
+    convertidoACliente?: boolean;
 }
 
 interface Partner {
@@ -41,7 +43,7 @@ interface Partner {
     partnerCode?: string | null;
 }
 
-type ActiveTab = 'solicitudes' | 'clientes' | 'partners' | 'referidos' | 'facturacion';
+type ActiveTab = 'solicitudes' | 'clientes' | 'partners' | 'referidos' | 'facturacion' | 'ia_proposals';
 
 interface Pago {
     id: string;
@@ -50,6 +52,7 @@ interface Pago {
     monto: number;
     pagado: boolean;
     fechaPago?: any;
+    linkPago?: string | null;
 }
 
 const FIREBASE_API_KEY = 'AIzaSyCgPww2i15SPqZncEdWbQaFmN8HpY2CUt0';
@@ -88,6 +91,12 @@ export default function AdminDashboard() {
     const [showEditCliente, setShowEditCliente] = useState(false);
     const [editClienteData, setEditClienteData] = useState<Partial<Cliente>>({});
     const [editLoading, setEditLoading] = useState(false);
+    const [showNewLeadModal, setShowNewLeadModal] = useState(false);
+    const [newLeadData, setNewLeadData] = useState<Partial<Cotizacion>>({});
+    const [newLeadLoading, setNewLeadLoading] = useState(false);
+    const [isCustomProyecto, setIsCustomProyecto] = useState(false);
+    const [editPagoId, setEditPagoId] = useState<string | null>(null);
+    const [editPagoMonto, setEditPagoMonto] = useState<number>(0);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -125,19 +134,22 @@ export default function AdminDashboard() {
 
     // Asegura que exista el pago del mes actual para un cliente
     const ensurePagoMesActual = async (cliente: Cliente) => {
-        const hoy = new Date();
-        const mes = hoy.getMonth() + 1;
-        const anio = hoy.getFullYear();
-        const pagosSnap = await getDocs(collection(db, 'clientes', cliente.id, 'pagos'));
-        const pagos = pagosSnap.docs.map(d => ({ id: d.id, ...d.data() } as Pago));
-        const existeMes = pagos.find(p => p.mes === mes && p.anio === anio);
-        if (!existeMes && cliente.mensualidadMonto) {
-            const ref = await addDoc(collection(db, 'clientes', cliente.id, 'pagos'), {
-                mes, anio, monto: cliente.mensualidadMonto, pagado: false
-            });
-            pagos.push({ id: ref.id, mes, anio, monto: cliente.mensualidadMonto, pagado: false });
+        try {
+            const hoy = new Date();
+            const mes = hoy.getMonth() + 1;
+            const anio = hoy.getFullYear();
+            const pagosSnap = await getDocs(collection(db, 'clientes', cliente.id, 'pagos'));
+            const pagos = pagosSnap.docs.map(d => ({ id: d.id, ...d.data() } as Pago));
+            const existeMes = pagos.find(p => p.mes === mes && p.anio === anio);
+            if (!existeMes && cliente.mensualidadMonto) {
+                await addDoc(collection(db, 'clientes', cliente.id, 'pagos'), {
+                    mes, anio, monto: cliente.mensualidadMonto, pagado: false
+                });
+            }
+        } catch (error: any) {
+            console.error('Error en ensurePagoMesActual:', error);
+            toast.error('Error al verificar pagos del mes: ' + error.message);
         }
-        setPagosCliente(pagos.sort((a, b) => (b.anio * 12 + b.mes) - (a.anio * 12 + a.mes)));
     };
 
     const handleSelectCliente = async (c: Cliente) => {
@@ -145,6 +157,20 @@ export default function AdminDashboard() {
         setPagosCliente([]);
         await ensurePagoMesActual(c);
     };
+
+    useEffect(() => {
+        if (!selectedCliente) return;
+        const q = query(collection(db, 'clientes', selectedCliente.id, 'pagos'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const pagos: Pago[] = [];
+            snapshot.forEach(doc => { pagos.push({ id: doc.id, ...doc.data() } as Pago); });
+            setPagosCliente(pagos.sort((a, b) => (b.anio * 12 + b.mes) - (a.anio * 12 + a.mes)));
+        }, (error) => {
+            console.error("Error fetching pagos en realtime:", error);
+            toast.error("No se pudieron cargar los pagos: " + error.message);
+        });
+        return () => unsubscribe();
+    }, [selectedCliente]);
 
     const marcarPagado = async (clienteId: string, pago: Pago, pagado: boolean) => {
         await updateDoc(doc(db, 'clientes', clienteId, 'pagos', pago.id), {
@@ -192,6 +218,39 @@ export default function AdminDashboard() {
             setConvertirLoading(false);
         }
     };
+    const crearLeadManual = async () => {
+        if (!newLeadData.nombre || !newLeadData.correo || (!newLeadData.proyecto && !isCustomProyecto)) {
+            toast.error('Nombre, Correo y Proyecto son obligatorios.');
+            return;
+        }
+        setNewLeadLoading(true);
+        try {
+            const nuevoId = doc(collection(db, 'cotizaciones')).id;
+            const nuevaCotizacion: Omit<Cotizacion, 'id'> = {
+                nombre: newLeadData.nombre,
+                correo: newLeadData.correo,
+                telefono: newLeadData.telefono || '',
+                proyecto: newLeadData.proyecto || 'Proyecto Personalizado',
+                presupuesto: newLeadData.presupuesto || 'No especificado',
+                descripcion: newLeadData.descripcion || 'Lead ingresado manualmente.',
+                precioCotizado: newLeadData.precioCotizado || null,
+                mensualidadMantenimiento: newLeadData.mensualidadMantenimiento || null,
+                createdAt: Timestamp.now(),
+                status: 'por_atender',
+                notasAdmin: '',
+            };
+            await setDoc(doc(db, 'cotizaciones', nuevoId), nuevaCotizacion);
+            setCotizaciones(prev => [{ id: nuevoId, ...nuevaCotizacion }, ...prev]);
+            setShowNewLeadModal(false);
+            setNewLeadData({});
+            toast.success('Lead creado correctamente.');
+        } catch (e) {
+            toast.error('Error al crear el Lead. Intenta de nuevo.');
+        } finally {
+            setNewLeadLoading(false);
+        }
+    };
+
     const eliminarCliente = async () => {
         if (!selectedCliente) return;
         try {
@@ -221,11 +280,27 @@ export default function AdminDashboard() {
                 mensualidadMonto: editClienteData.mensualidadMonto !== undefined ? editClienteData.mensualidadMonto : selectedCliente.mensualidadMonto,
             };
             await updateDoc(doc(db, 'clientes', selectedCliente.id), updates);
+            
+            // Sincronizar importes con la Cotización Base para que los links y contratos tengan el monto final
+            if (selectedCliente.cotizacionId) {
+                const cotiUpdates: Partial<Cotizacion> = {};
+                if (editClienteData.precioCobrado !== undefined) cotiUpdates.precioCotizado = editClienteData.precioCobrado;
+                if (editClienteData.mensualidadMonto !== undefined) cotiUpdates.mensualidadMantenimiento = editClienteData.mensualidadMonto;
+                if (editClienteData.nombre) cotiUpdates.nombre = editClienteData.nombre;
+                if (editClienteData.proyecto) cotiUpdates.proyecto = editClienteData.proyecto;
+                
+                await updateDoc(doc(db, 'cotizaciones', selectedCliente.cotizacionId), cotiUpdates);
+                setCotizaciones(prev => prev.map(c => c.id === selectedCliente.cotizacionId ? { ...c, ...cotiUpdates } : c));
+                if (selected?.id === selectedCliente.cotizacionId) {
+                     setSelected(prev => prev ? { ...prev, ...cotiUpdates } : null);
+                }
+            }
+
             const updated = { ...selectedCliente, ...updates };
             setClientes(prev => prev.map(c => c.id === selectedCliente.id ? updated : c));
             setSelectedCliente(updated);
             setShowEditCliente(false);
-            toast.success('Cliente actualizado.');
+            toast.success('Cliente y Cotización Base actualizados sincronizadamente.');
         } catch {
             toast.error('Error al actualizar.');
         } finally {
@@ -282,6 +357,47 @@ export default function AdminDashboard() {
             toast.error(`Error al generar link: ${e.message}`);
         } finally {
             setGeneratingLink(false);
+        }
+    };
+
+    const generarLinkMensualidad = async (pago: Pago) => {
+        if (!selectedCliente || !selectedCliente.correo) {
+            toast.error('El cliente debe tener correo configurado para MercadoPago.');
+            return;
+        }
+        if (pago.linkPago) {
+            navigator.clipboard.writeText(pago.linkPago);
+            toast.success('¡Link de mensualidad copiado al portapapeles!');
+            return;
+        }
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const nombreMes = meses[pago.mes - 1];
+        const loadingId = toast.loading('Generando link de mensualidad...');
+        try {
+            const link = await createMPPreference({
+                title: `Mensualidad ${nombreMes} ${pago.anio} — ${selectedCliente.proyecto}`,
+                amount: pago.monto,
+                clientEmail: selectedCliente.correo,
+                externalRef: `mens-${selectedCliente.id}-${pago.anio}-${pago.mes}`,
+            });
+            await updateDoc(doc(db, 'clientes', selectedCliente.id, 'pagos', pago.id), { linkPago: link });
+            setPagosCliente(prev => prev.map(p => p.id === pago.id ? { ...p, linkPago: link } : p));
+            navigator.clipboard.writeText(link);
+            toast.success('¡Link de mensualidad generado y copiado!', { id: loadingId });
+        } catch (e: any) {
+            toast.error(`Error al generar link: ${e.message}`, { id: loadingId });
+        }
+    };
+
+    const saveEditPago = async (pago: Pago) => {
+        if (!selectedCliente) return;
+        try {
+            await updateDoc(doc(db, 'clientes', selectedCliente.id, 'pagos', pago.id), { monto: editPagoMonto, linkPago: null });
+            setPagosCliente(prev => prev.map(p => p.id === pago.id ? { ...p, monto: editPagoMonto, linkPago: undefined } : p));
+            setEditPagoId(null);
+            toast.success('Monto de mensualidad actualizado.');
+        } catch {
+            toast.error('Error al actualizar.');
         }
     };
 
@@ -549,11 +665,11 @@ export default function AdminDashboard() {
     const { grouped, withoutCode } = referidosAgrupados();
 
     const tabs: { key: ActiveTab; label: string; icon: React.ReactNode }[] = [
-        { key: 'solicitudes', label: 'Solicitudes', icon: <FiMail className="w-4 h-4" /> },
-        { key: 'clientes', label: 'Clientes', icon: <FiUserCheck className="w-4 h-4" /> },
+        { key: 'solicitudes', label: 'CRM Master', icon: <FiUserCheck className="w-4 h-4" /> },
         { key: 'partners', label: 'Partners', icon: <FiUsers className="w-4 h-4" /> },
         { key: 'referidos', label: 'Referidos', icon: <FiBarChart2 className="w-4 h-4" /> },
         { key: 'facturacion', label: 'Facturación', icon: <FiDollarSign className="w-4 h-4" /> },
+        { key: 'ia_proposals', label: 'Generador IA', icon: <FiCpu className="w-4 h-4" /> },
     ];
 
     return (
@@ -564,7 +680,7 @@ export default function AdminDashboard() {
                         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                             Admin Dashboard
                             <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                                v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
+                                v1.2.0
                             </span>
                             <span className="flex items-center gap-1 text-xs text-green-500 font-normal">
                                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
@@ -604,44 +720,308 @@ export default function AdminDashboard() {
 
             <div className="container mx-auto px-4 py-8">
 
+                {/* ======= TAB: GENERADOR IA ======= */}
+                {activeTab === 'ia_proposals' && (
+                    <div className="bg-card shadow-sm rounded-xl border border-border/50 p-6 lg:p-8">
+                        <AIProposalsGenerator />
+                    </div>
+                )}
+
                 {/* ======= TAB: SOLICITUDES CRM ======= */}
                 {activeTab === 'solicitudes' && (() => {
-                    const filtered = statusFilter === 'todas' ? cotizaciones : cotizaciones.filter(c => (c.status || 'por_atender') === statusFilter);
+                    const activeCotizaciones = cotizaciones.filter(c => !c.convertidoACliente);
+                    const filtered = statusFilter === 'todas' ? activeCotizaciones : activeCotizaciones.filter(c => (c.status || 'por_atender') === statusFilter);
                     return (
                         <>
-                            {viewMode === 'kanban' ? (
-                                <div className="bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden">
-                                    <div className="p-4 border-b border-border bg-muted/30">
-                                        <div className="flex justify-between items-center">
-                                            <h2 className="font-semibold text-lg">Solicitudes — Vista Kanban</h2>
-                                            <div className="flex items-center border border-border rounded-md overflow-hidden">
-                                                <button onClick={() => setViewMode('lista')}
-                                                    className="p-1.5 transition-colors hover:bg-muted text-muted-foreground"
-                                                    title="Vista Lista"><FiList className="w-3.5 h-3.5" /></button>
-                                                <button onClick={() => setViewMode('kanban')}
-                                                    className="p-1.5 transition-colors bg-primary text-primary-foreground"
-                                                    title="Vista Kanban"><FiGrid className="w-3.5 h-3.5" /></button>
+                            <div className="flex justify-end mb-4">
+                                <button
+                                    onClick={() => { setNewLeadData({}); setIsCustomProyecto(false); setShowNewLeadModal(true); }}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                                >
+                                    <FiUserPlus className="w-4 h-4" /> Nuevo Lead Manual
+                                </button>
+                            </div>
+
+                            {/* Modal Nuevo Lead */}
+                            {showNewLeadModal && (
+                                <div className="p-5 bg-card border border-primary/20 rounded-xl shadow-md mb-6 animate-in fade-in zoom-in-95 duration-200">
+                                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2 mb-4">
+                                        <FiUserPlus className="text-primary w-5 h-5" /> Registrar Lead Manualmente
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Nombre Completo *</label>
+                                            <input type="text" placeholder="Ej: Juan Pérez" value={newLeadData.nombre || ''} onChange={e => setNewLeadData(prev => ({ ...prev, nombre: e.target.value }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Correo Electrónico *</label>
+                                            <input type="email" placeholder="ejemplo@correo.com" value={newLeadData.correo || ''} onChange={e => setNewLeadData(prev => ({ ...prev, correo: e.target.value }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Teléfono (WhatsApp)</label>
+                                            <input type="tel" placeholder="Ej: 5512345678" value={newLeadData.telefono || ''} onChange={e => setNewLeadData(prev => ({ ...prev, telefono: e.target.value }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Presupuesto (Opcional)</label>
+                                            <input type="text" placeholder="Ej: $15,000 MXN" value={newLeadData.presupuesto || ''} onChange={e => setNewLeadData(prev => ({ ...prev, presupuesto: e.target.value }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Servicio / Proyecto *</label>
+                                            <select 
+                                                value={isCustomProyecto ? 'otro' : (newLeadData.proyecto || '')}
+                                                onChange={e => {
+                                                    if (e.target.value === 'otro') {
+                                                        setIsCustomProyecto(true);
+                                                        setNewLeadData(prev => ({ ...prev, proyecto: '' }));
+                                                    } else {
+                                                        setIsCustomProyecto(false);
+                                                        setNewLeadData(prev => ({ ...prev, proyecto: e.target.value }));
+                                                    }
+                                                }}
+                                                className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary"
+                                            >
+                                                <option value="" disabled>Selecciona el servicio de interés...</option>
+                                                <option value="CRM Multi-agente">CRM Multi-agente</option>
+                                                <option value="Landing Pages / Embudos">Landing Pages / Embudos</option>
+                                                <option value="E-commerce / Tiendas Online">E-commerce / Tiendas Online</option>
+                                                <option value="Portales Educativos (E-learning)">Portales Educativos (E-learning)</option>
+                                                <option value="Sistemas de Tickets (Helpdesk)">Sistemas de Tickets (Helpdesk)</option>
+                                                <option value="Directorios / Marketplaces">Directorios / Marketplaces</option>
+                                                <option value="Portales de Empleados (RRHH)">Portales de Empleados (RRHH)</option>
+                                                <option value="Sistemas de Reservas / Citas">Sistemas de Reservas / Citas</option>
+                                                <option value="Analíticas y Dashboards Financieros">Analíticas y Dashboards Financieros</option>
+                                                <option value="Sistemas de Registros (Médicos, Escolares)">Sistemas de Registros (Médicos, Escolares)</option>
+                                                <option value="otro">Otro / Personalizado</option>
+                                            </select>
+                                        </div>
+                                        {isCustomProyecto && (
+                                            <div className="md:col-span-2">
+                                                <label className="text-xs font-semibold uppercase text-muted-foreground">Especificar Proyecto</label>
+                                                <input type="text" placeholder="Escribe el proyecto o requerimiento..." value={newLeadData.proyecto || ''} onChange={e => setNewLeadData(prev => ({ ...prev, proyecto: e.target.value }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                                            <div>
+                                                <label className="text-xs font-semibold uppercase text-muted-foreground">Cobro de Desarrollo ($ MXN)</label>
+                                                <input type="number" placeholder="Ej: 15000" value={newLeadData.precioCotizado || ''} onChange={e => setNewLeadData(prev => ({ ...prev, precioCotizado: e.target.value ? parseFloat(e.target.value) : undefined }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-semibold uppercase text-muted-foreground">Mensualidad Soporte ($ MXN)</label>
+                                                <input type="number" placeholder="Ej: 3000" value={newLeadData.mensualidadMantenimiento || ''} onChange={e => setNewLeadData(prev => ({ ...prev, mensualidadMantenimiento: e.target.value ? parseFloat(e.target.value) : undefined }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary" />
                                             </div>
                                         </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Descripción Adicional (Opcional)</label>
+                                            <textarea placeholder="Detalles del lead, requerimientos específicos..." value={newLeadData.descripcion || ''} onChange={e => setNewLeadData(prev => ({ ...prev, descripcion: e.target.value }))} className="w-full mt-1 text-sm px-3 py-2 border border-input rounded-md bg-background focus:ring-1 focus:ring-primary h-20 resize-none" />
+                                        </div>
                                     </div>
-                                    <div className="p-4">
-                                        <KanbanBoard
-                                            cotizaciones={cotizaciones}
-                                            selectedId={selected?.id}
-                                            onSelect={(c) => { setSelected(c as unknown as Cotizacion); setPriceInput(String(c.precioCotizado ?? '')); setNotasInput(''); }}
-                                            onDelete={deleteCotizacion}
-                                            onStatusChange={(id, newStatus) => updateCotizacion(id, { status: newStatus })}
-                                        />
+                                    <div className="flex items-center gap-3 mt-6 border-t border-border pt-4">
+                                        <button onClick={crearLeadManual} disabled={newLeadLoading} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-bold shadow-md hover:bg-primary/90 hover:shadow-lg disabled:opacity-50 transition-all">
+                                            {newLeadLoading ? 'Guardando...' : <><FiSave className="w-4 h-4" /> Crear Lead Cotización</>}
+                                        </button>
+                                        <button onClick={() => setShowNewLeadModal(false)} className="px-5 py-2.5 bg-muted text-foreground border border-input rounded-lg text-sm font-medium hover:bg-muted/80 transition-all">Cancelar</button>
                                     </div>
+                                </div>
+                            )}
+
+                            {viewMode === 'kanban' ? (
+                                <div className="flex gap-4">
+                                    <div className="flex-1 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden flex flex-col h-[82vh]">
+                                        <div className="p-4 border-b border-border bg-muted/30">
+                                            <div className="flex justify-between items-center">
+                                                <h2 className="font-semibold text-lg">Master CRM — Kanban</h2>
+                                                <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => setViewMode('kanban')}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-background text-foreground shadow-sm"
+                                                        >
+                                                            <FiGrid className="w-3.5 h-3.5" /> Pipeline
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setViewMode('lista')}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all text-muted-foreground hover:text-foreground"
+                                                        >
+                                                            <FiList className="w-3.5 h-3.5" /> Lista Leads
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <div className="flex-1 overflow-x-auto bg-muted/5">
+                                            <MasterKanbanBoard
+                                                cotizaciones={activeCotizaciones}
+                                                clientes={clientes}
+                                                selectedId={selected?.id || selectedCliente?.id}
+                                                onSelectCotizacion={(c) => { 
+                                                    setSelected(c as unknown as Cotizacion); 
+                                                    setSelectedCliente(null);
+                                                    setPriceInput(String(c.precioCotizado ?? '')); 
+                                                    setMensualidadInput(String(c.mensualidadMantenimiento ?? ''));
+                                                    setNotasInput(c.notasAdmin ?? ''); 
+                                                }}
+                                                onSelectCliente={(c) => { 
+                                                    handleSelectCliente(c); 
+                                                    setSelected(null);
+                                                }}
+                                                onDeleteCotizacion={deleteCotizacion}
+                                                onDeleteCliente={(id) => { setSelectedCliente(clientes.find(cl => cl.id === id) || null); setShowDeleteCliente(true); }}
+                                                onStatusChangeCotizacion={(id, newStatus) => updateCotizacion(id, { status: newStatus })}
+                                                onStatusChangeCliente={actualizarStatusCliente}
+                                                onConvertCotizacionToCliente={(id) => {
+                                                    const cot = cotizaciones.find(c => c.id === id);
+                                                    if (cot) {
+                                                        setSelected(cot);
+                                                        setConvertirFecha('');
+                                                        setShowConvertirModal(true);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* PANEL DERECHO KANBAN UNIFICADO */}
+                                    {(selected || selectedCliente) && (
+                                        <div className="w-[380px] flex-shrink-0 bg-card border border-border rounded-xl p-5 space-y-4 overflow-y-auto max-h-[82vh] shadow-sm">
+                                            {selected ? (
+                                                /* DETALLE COTIZACION */
+                                                <>
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-lg truncate">{selected.nombre}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{selected.proyecto}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusConfig[selected.status || 'por_atender']?.color}`}>Lead</span>
+                                                            <button onClick={() => setSelected(null)} className="p-1.5 text-muted-foreground hover:bg-muted rounded-md text-xs">✕</button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Contact */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-3 bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                                            <FiMail className="text-primary w-4 h-4 flex-shrink-0" />
+                                                            <div className="truncate"><p className="text-xs text-muted-foreground">Correo</p><p className="text-sm font-medium truncate">{selected.correo}</p></div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 bg-muted/30 p-2.5 rounded-lg border border-border/50">
+                                                            <FiPhone className="text-primary w-4 h-4 flex-shrink-0" />
+                                                            <div className="flex-1 truncate"><p className="text-xs text-muted-foreground">Teléfono</p><p className="text-sm font-medium truncate">{selected.telefono || 'N/A'}</p></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-background border border-border rounded-xl p-3">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Precios Cotizados (MXN)</p>
+                                                        <div className="space-y-3">
+                                                            <div className="flex gap-2">
+                                                                <input type="number" placeholder="Desarrollo" value={priceInput} onChange={e => setPriceInput(e.target.value)}
+                                                                    className="flex h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs" />
+                                                                <input type="number" placeholder="Mensualidad" value={mensualidadInput} onChange={e => setMensualidadInput(e.target.value)}
+                                                                    className="flex h-8 w-24 rounded-md border border-input bg-background px-2 text-xs" />
+                                                                <button onClick={() => updateCotizacion(selected.id, { precioCotizado: priceInput ? parseFloat(priceInput) : null, mensualidadMantenimiento: mensualidadInput ? parseFloat(mensualidadInput) : null })}
+                                                                    className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 font-semibold flex-shrink-0">
+                                                                    <FiSave className="inline-block" />
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex justify-between text-sm">
+                                                                <span>Desarrollo: <strong className="text-green-600">${selected.precioCotizado?.toLocaleString() || '0'}</strong></span>
+                                                                <span>Mensual: <strong className="text-blue-600">${selected.mensualidadMantenimiento?.toLocaleString() || '0'}</strong></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {selected.precioCotizado && (
+                                                        <div className={`rounded-xl border p-3 ${selected.status === 'atendida' ? 'bg-green-50 dark:bg-green-950/20 border-green-300/50' : 'bg-muted/30 border-border'}`}>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <FiLink className="text-[#00B1EA] w-3 h-3" />
+                                                                    <p className="text-[10px] font-bold uppercase text-muted-foreground">Link MercadoPago</p>
+                                                                </div>
+                                                                <button onClick={openPaymentModal} disabled={generatingLink} className="text-[10px] font-semibold px-2 py-1 rounded bg-[#00B1EA] text-white hover:bg-[#0095c8]">
+                                                                    {selected.linkPago ? 'Generar de nuevo' : 'Generar Link'}
+                                                                </button>
+                                                            </div>
+                                                            {selected.linkPago && <p className="text-[10px] truncate text-muted-foreground font-mono bg-background p-1.5 rounded">{selected.linkPago}</p>}
+                                                        </div>
+                                                    )}
+
+                                                    <AIAnalisis data={{ nombre: selected.nombre, proyecto: selected.proyecto, presupuesto: selected.presupuesto, descripcion: selected.descripcion }} />
+
+                                                    {selected.status === 'atendida' && selected.precioCotizado && (
+                                                        <button onClick={() => { setConvertirFecha(''); setShowConvertirModal(true); }} className="w-full flex justify-center items-center gap-2 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 mt-4">
+                                                            <FiUserCheck /> Formalizar a Cliente Activo
+                                                        </button>
+                                                    )}
+                                                </>
+                                            ) : selectedCliente ? (
+                                                /* DETALLE CLIENTE ACTIVO */
+                                                <>
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-lg truncate">{selectedCliente.nombre}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{selectedCliente.proyecto}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border border-green-500 text-green-600 bg-green-50">Cliente</span>
+                                                            <button onClick={() => { setEditClienteData({ ...selectedCliente }); setShowEditCliente(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-md"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-1.414c0-.53.21-1.04.586-1.414z" /></svg></button>
+                                                            <button onClick={() => setShowDeleteCliente(true)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md"><FiTrash2 className="w-3.5 h-3.5" /></button>
+                                                            <button onClick={() => setSelectedCliente(null)} className="p-1.5 text-muted-foreground hover:bg-muted rounded-md text-xs">✕</button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-2">
+                                                        {selectedCliente.precioCobrado && <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded font-semibold flex-1 text-center">Desarrollo: ${selectedCliente.precioCobrado.toLocaleString()}</span>}
+                                                        {selectedCliente.mensualidadMonto && <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded font-semibold flex-1 text-center">${selectedCliente.mensualidadMonto.toLocaleString()}/mes</span>}
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 mt-4">Historial de Mensualidades</p>
+                                                        {!selectedCliente.mensualidadMonto ? (
+                                                            <p className="text-xs text-muted-foreground italic">Este cliente no paga mensualidad.</p>
+                                                        ) : pagosCliente.length === 0 ? (
+                                                            <p className="text-xs text-muted-foreground italic">No hay registros de pago.</p>
+                                                        ) : (
+                                                            <div className="space-y-1.5">
+                                                                {pagosCliente.map(p => {
+                                                                    const nombreMes = new Date(p.anio, p.mes - 1).toLocaleString('es', { month: 'long' });
+                                                                    return (
+                                                                        <div key={p.id} className="flex items-center justify-between bg-muted/30 border border-border rounded-md px-3 py-2 text-sm">
+                                                                            <span className="capitalize text-xs font-semibold">{nombreMes} {p.anio}</span>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="text-xs font-mono">${p.monto}</span>
+                                                                                {p.pagado ? (
+                                                                                    <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded cursor-pointer" onClick={() => marcarPagado(selectedCliente.id, p, false)}>Pagado</span>
+                                                                                ) : (
+                                                                                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded cursor-pointer" onClick={() => marcarPagado(selectedCliente.id, p, true)}>Cobrar</span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Modal eliminar cliente */}
+                                                    {showDeleteCliente && (
+                                                        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                                            <p className="text-xs font-semibold text-red-700 mb-2">¿Eliminar cliente?</p>
+                                                            <div className="flex gap-2">
+                                                                <button onClick={eliminarCliente} className="flex-1 text-xs px-2 py-1 bg-red-600 text-white rounded">Sí, eliminar</button>
+                                                                <button onClick={() => setShowDeleteCliente(false)} className="flex-1 text-xs px-2 py-1 border rounded hover:bg-muted">Cancelar</button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                </>
+                                            ) : null}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                     <div className="lg:col-span-1 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden flex flex-col h-[82vh]">
                                         <div className="p-4 border-b border-border bg-muted/30">
                                             <div className="flex justify-between items-center mb-3">
-                                                <h2 className="font-semibold text-lg">Solicitudes</h2>
+                                                <h2 className="font-semibold text-lg flex gap-2">Listado</h2>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">{filtered.length}</span>
                                                     <div className="flex items-center border border-border rounded-md overflow-hidden">
                                                         <button onClick={() => setViewMode('lista')}
                                                             className="p-1.5 transition-colors bg-primary text-primary-foreground"
@@ -652,39 +1032,70 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {(['todas', 'por_atender', 'en_proceso', 'atendida', 'descartada'] as const).map(s => (
-                                                    <button key={s} onClick={() => setStatusFilter(s)}
-                                                        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${statusFilter === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>
-                                                        {s === 'todas' ? 'Todas' : statusConfig[s]?.label}
-                                                    </button>
-                                                ))}
+                                            
+                                            <div className="flex bg-muted/50 p-1 rounded-lg mb-3">
+                                                <button onClick={() => { setSelectedCliente(null); setSelected(null); }} className={`flex-1 text-xs py-1.5 rounded-md font-semibold ${selectedCliente === null ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}>
+                                                    Leads ({activeCotizaciones.length})
+                                                </button>
+                                                <button onClick={() => { setSelected(null); setSelectedCliente(clientes[0] || null); }} className={`flex-1 text-xs py-1.5 rounded-md font-semibold ${selectedCliente !== null ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}>
+                                                    Clientes ({clientes.length})
+                                                </button>
                                             </div>
+
+                                            {selectedCliente === null && (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {(['todas', 'por_atender', 'en_proceso', 'atendida', 'descartada'] as const).map(s => (
+                                                        <button key={s} onClick={() => setStatusFilter(s)}
+                                                            className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${statusFilter === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>
+                                                            {s === 'todas' ? 'Todas' : statusConfig[s]?.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="overflow-y-auto flex-1 p-2 space-y-1.5">
-                                            {filtered.length === 0 ? (
-                                                <p className="text-center text-muted-foreground p-4 text-sm">No hay solicitudes en esta categoría.</p>
-                                            ) : filtered.map(c => {
-                                                const st = statusConfig[c.status || 'por_atender'];
-                                                return (
-                                                    <div key={c.id} className={`flex items-center gap-2 rounded-lg border transition-colors ${selected?.id === c.id ? 'bg-primary/10 border-primary/30' : 'bg-background border-transparent hover:bg-muted/50 hover:border-border'}`}>
-                                                        <button onClick={() => { setSelected(c); setPriceInput(String(c.precioCotizado ?? '')); setMensualidadInput(String(c.mensualidadMantenimiento ?? '')); setNotasInput(c.notasAdmin ?? ''); }}
-                                                            className="flex-1 text-left p-3 min-w-0">
+                                            {selectedCliente === null ? (
+                                                filtered.length === 0 ? (
+                                                    <p className="text-center text-muted-foreground p-4 text-sm">No hay solicitudes en esta categoría.</p>
+                                                ) : filtered.map(c => {
+                                                    const st = statusConfig[c.status || 'por_atender'];
+                                                    return (
+                                                        <div key={c.id} className={`flex items-center gap-2 rounded-lg border transition-colors ${selected?.id === c.id ? 'bg-primary/10 border-primary/30' : 'bg-background border-transparent hover:bg-muted/50 hover:border-border'}`}>
+                                                            <button onClick={() => { setSelected(c); setSelectedCliente(null); setPriceInput(String(c.precioCotizado ?? '')); setMensualidadInput(String(c.mensualidadMantenimiento ?? '')); setNotasInput(c.notasAdmin ?? ''); }}
+                                                                className="flex-1 text-left p-3 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${st?.color}`}>
+                                                                        <span className={`w-1.5 h-1.5 rounded-full ${st?.dot}`}></span>{st?.label}
+                                                                    </span>
+                                                                    {c.precioCotizado && <span className="text-[10px] text-green-600 font-mono font-bold">${c.precioCotizado.toLocaleString()}</span>}
+                                                                </div>
+                                                                <p className="font-medium text-sm truncate">{c.nombre}</p>
+                                                                <p className="text-xs text-muted-foreground truncate">{c.proyecto}</p>
+                                                            </button>
+                                                            <button onClick={() => deleteCotizacion(c.id)} className="p-2 mr-1 text-destructive/40 hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors flex-shrink-0">
+                                                                <FiTrash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                clientes.length === 0 ? (
+                                                    <p className="text-center text-muted-foreground p-4 text-sm">No hay clientes activos.</p>
+                                                ) : clientes.map(c => (
+                                                    <div key={c.id} className={`flex items-center gap-2 rounded-lg border transition-colors ${selectedCliente?.id === c.id ? 'bg-primary/10 border-primary/30' : 'bg-background border-transparent hover:bg-muted/50 hover:border-border'}`}>
+                                                        <button onClick={() => { setSelectedCliente(c); setSelected(null); }} className="flex-1 text-left p-3 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${st?.color}`}>
-                                                                    <span className={`w-1.5 h-1.5 rounded-full ${st?.dot}`}></span>{st?.label}
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">
+                                                                    Cliente Activo
                                                                 </span>
-                                                                {c.precioCotizado && <span className="text-[10px] text-green-600 font-mono font-bold">${c.precioCotizado.toLocaleString()}</span>}
+                                                                {c.mensualidadMonto && <span className="text-[10px] text-blue-600 font-mono font-bold">${c.mensualidadMonto.toLocaleString()}/m</span>}
                                                             </div>
                                                             <p className="font-medium text-sm truncate">{c.nombre}</p>
                                                             <p className="text-xs text-muted-foreground truncate">{c.proyecto}</p>
                                                         </button>
-                                                        <button onClick={() => deleteCotizacion(c.id)} className="p-2 mr-1 text-destructive/40 hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors flex-shrink-0">
-                                                            <FiTrash2 className="w-3.5 h-3.5" />
-                                                        </button>
                                                     </div>
-                                                );
-                                            })}
+                                                ))
+                                            )}
                                         </div>
                                     </div>
 
@@ -865,9 +1276,124 @@ export default function AdminDashboard() {
                                                     </div>
                                                 )}
                                             </div>
+                                        ) : selectedCliente ? (
+                                            <div className="bg-card border border-border/50 rounded-xl shadow-sm p-6 lg:p-8 space-y-6">
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                                    <div>
+                                                        <h2 className="text-2xl font-bold">{selectedCliente.nombre}</h2>
+                                                        <p className="inline-block mt-2 px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm font-medium">{selectedCliente.proyecto}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => {
+                                                            const coti = cotizaciones.find(cot => cot.id === selectedCliente.cotizacionId);
+                                                            if (coti) {
+                                                                setSelected(coti);
+                                                                setSelectedCliente(null);
+                                                                toast.success('Abriendo cotización original para ver contrato/link...');
+                                                            } else {
+                                                                toast.error('No se encontró la cotización original.');
+                                                            }
+                                                        }} className="px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200" title="Ver cotización original, contratos y links de pago">
+                                                            <FiFileText className="inline w-3.5 h-3.5" /> Cotización Base
+                                                        </button>
+                                                        <button onClick={() => { setEditClienteData({ ...selectedCliente }); setShowEditCliente(true); }} className="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+                                                            Editar
+                                                        </button>
+                                                        <button onClick={() => setShowDeleteCliente(true)} className="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-md hover:bg-red-200">
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="bg-background p-4 rounded-xl border border-border">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Precio Cobrado</p>
+                                                        <p className="text-xl font-black text-green-600">${selectedCliente.precioCobrado?.toLocaleString() || '0'}</p>
+                                                    </div>
+                                                    <div className="bg-background p-4 rounded-xl border border-border">
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Mensualidad</p>
+                                                        <p className="text-xl font-black text-blue-600">${selectedCliente.mensualidadMonto?.toLocaleString() || '0'}<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-muted/30 p-4 rounded-xl border border-border">
+                                                    <h3 className="text-sm font-bold uppercase text-muted-foreground mb-3">Historial de Mensualidades</h3>
+                                                    {pagosCliente.length === 0 ? (
+                                                        <p className="text-sm text-muted-foreground italic">No hay historial de pagos.</p>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            {pagosCliente.map(pago => {
+                                                                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                                                const isEditing = editPagoId === pago.id;
+                                                                return (
+                                                                    <div key={pago.id} className={`flex flex-col gap-2 p-3 rounded-lg border text-xs shadow-sm transition-colors ${pago.pagado ? 'bg-green-50 dark:bg-green-950/20 border-green-200/60 text-green-800 dark:text-green-300' : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 text-amber-800 dark:text-amber-300'}`}>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <div className="flex flex-col gap-1">
+                                                                                <p className="font-bold text-sm">{meses[pago.mes - 1]} {pago.anio}</p>
+                                                                                {isEditing ? (
+                                                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                                                        <span className="font-semibold text-muted-foreground">$</span>
+                                                                                        <input 
+                                                                                            type="number" 
+                                                                                            value={editPagoMonto} 
+                                                                                            onChange={e => setEditPagoMonto(Number(e.target.value))} 
+                                                                                            className="w-20 h-7 px-2 text-xs border border-border rounded-md bg-background focus:ring-1 focus:ring-primary/50 text-foreground"
+                                                                                            autoFocus
+                                                                                        />
+                                                                                        <button onClick={() => saveEditPago(pago)} className="p-1 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"><FiSave className="w-3.5 h-3.5" /></button>
+                                                                                        <button onClick={() => setEditPagoId(null)} className="p-1 text-red-600 hover:bg-red-100 rounded-md transition-colors"><FiX className="w-3.5 h-3.5" /></button>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="flex items-center gap-2 group">
+                                                                                        <p className="text-[11px] font-medium opacity-80">${pago.monto.toLocaleString()} MXN</p>
+                                                                                        {!pago.pagado && (
+                                                                                            <button 
+                                                                                                onClick={() => { setEditPagoId(pago.id); setEditPagoMonto(pago.monto); }} 
+                                                                                                className="text-blue-500 hover:text-blue-700 opacity-40 group-hover:opacity-100 transition-opacity" 
+                                                                                                title="Editar monto a cobrar de este mes"
+                                                                                            >
+                                                                                                <FiEdit2 className="w-3 h-3" />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                {!pago.pagado && (
+                                                                                    <button 
+                                                                                        onClick={() => generarLinkMensualidad(pago)} 
+                                                                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md font-semibold text-[10px] text-white shadow-sm transition-all ${pago.linkPago ? 'bg-[#00B1EA] hover:bg-[#0090c0] hover:shadow-md' : 'bg-indigo-500 hover:bg-indigo-600'}`}
+                                                                                        title={pago.linkPago ? 'Copiar link ya generado' : 'Generar link de MercadoPago para esta mensualidad'}
+                                                                                    >
+                                                                                        {pago.linkPago ? <><FiCopy className="w-3 h-3" /> Copiar Link</> : <><FiLink className="w-3 h-3" /> Crear Link</>}
+                                                                                    </button>
+                                                                                )}
+                                                                                <button onClick={() => marcarPagado(selectedCliente.id, pago, !pago.pagado)}
+                                                                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md shadow-sm font-semibold text-[10px] transition-colors ${pago.pagado ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-amber-500 text-white hover:bg-amber-600'}`}>
+                                                                                    {pago.pagado ? <><FiCheckCircle className="w-3 h-3" /> Pagado</> : <><FiXCircle className="w-3 h-3" /> Pendiente</>}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                        {pago.linkPago && !pago.pagado && (
+                                                                            <div className="text-[9px] text-muted-foreground truncate w-full pt-1 border-t border-black/5 dark:border-white/5 mt-1 opacity-70">
+                                                                                Link adjunto y listo para enviar.
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center gap-4 pt-4 border-t border-border">
+                                                    <a href={`mailto:${selectedCliente.correo}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"><FiMail /> {selectedCliente.correo}</a>
+                                                    {selectedCliente.telefono && <a href={`tel:${selectedCliente.telefono}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"><FiPhone /> {selectedCliente.telefono}</a>}
+                                                </div>
+                                            </div>
                                         ) : (
                                             <div className="h-full min-h-[400px] flex items-center justify-center border border-dashed border-border rounded-xl bg-card">
-                                                <p className="text-muted-foreground text-center">Selecciona una solicitud<br />para ver detalles y gestionar el CRM.</p>
+                                                <p className="text-muted-foreground text-center">Selecciona un elemento<br />para ver detalles y gestionar el CRM.</p>
                                             </div>
                                         )}
                                     </div>
@@ -918,6 +1444,8 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                         </div>
+
+
 
                         {clientes.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border rounded-xl text-center">
@@ -1019,13 +1547,29 @@ export default function AdminDashboard() {
                                                     <p className="text-xs text-muted-foreground truncate">{selectedCliente.proyecto}</p>
                                                 </div>
                                                 <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                                                    <button
-                                                        onClick={() => { setEditClienteData({ ...selectedCliente }); setShowEditCliente(true); }}
-                                                        className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-md transition-colors"
-                                                        title="Editar cliente"
-                                                    >
-                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-1.414c0-.53.21-1.04.586-1.414z" /></svg>
-                                                    </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                const coti = cotizaciones.find(cot => cot.id === selectedCliente.cotizacionId);
+                                                                if (coti) {
+                                                                    setSelected(coti);
+                                                                    setSelectedCliente(null);
+                                                                    toast.success('Abriendo cotización original para ver contrato/link...');
+                                                                } else {
+                                                                    toast.error('No se encontró la cotización original.');
+                                                                }
+                                                            }}
+                                                            className="p-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-md transition-colors"
+                                                            title="Ver cotización original, contratos y links"
+                                                        >
+                                                            <FiFileText className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setEditClienteData({ ...selectedCliente }); setShowEditCliente(true); }}
+                                                            className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-md transition-colors"
+                                                            title="Editar cliente"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H9v-1.414c0-.53.21-1.04.586-1.414z" /></svg>
+                                                        </button>
                                                     <button
                                                         onClick={() => setShowDeleteCliente(true)}
                                                         className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-colors"
@@ -1037,57 +1581,7 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
 
-                                            {/* Modal eliminar */}
-                                            {showDeleteCliente && (
-                                                <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200/60 rounded-lg">
-                                                    <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2">¿Eliminar a <strong>{selectedCliente.nombre}</strong>? Esta acción no se puede deshacer.</p>
-                                                    <div className="flex gap-2">
-                                                        <button onClick={eliminarCliente} className="flex-1 text-xs px-3 py-1.5 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition-colors">Sí, eliminar</button>
-                                                        <button onClick={() => setShowDeleteCliente(false)} className="flex-1 text-xs px-3 py-1.5 border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Modal editar */}
-                                            {showEditCliente && (
-                                                <div className="mt-3 p-3 bg-muted/40 border border-border rounded-lg space-y-2">
-                                                    <p className="text-xs font-bold text-foreground mb-1">Editar datos del cliente</p>
-                                                    {[
-                                                        { key: 'nombre', label: 'Nombre', type: 'text' },
-                                                        { key: 'proyecto', label: 'Proyecto', type: 'text' },
-                                                        { key: 'correo', label: 'Email', type: 'email' },
-                                                    ].map(({ key, label, type }) => (
-                                                        <div key={key}>
-                                                            <label className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</label>
-                                                            <input
-                                                                type={type}
-                                                                value={String(editClienteData[key as keyof Cliente] ?? '')}
-                                                                onChange={e => setEditClienteData(prev => ({ ...prev, [key]: e.target.value }))}
-                                                                className="w-full text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Precio ($)</label>
-                                                            <input type="number" value={editClienteData.precioCobrado ?? ''} onChange={e => setEditClienteData(prev => ({ ...prev, precioCobrado: e.target.value ? parseFloat(e.target.value) : null }))}
-                                                                className="w-full text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Mensualidad ($)</label>
-                                                            <input type="number" value={editClienteData.mensualidadMonto ?? ''} onChange={e => setEditClienteData(prev => ({ ...prev, mensualidadMonto: e.target.value ? parseFloat(e.target.value) : null }))}
-                                                                className="w-full text-xs px-2 py-1.5 border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2 pt-1">
-                                                        <button onClick={guardarEdicionCliente} disabled={editLoading}
-                                                            className="flex-1 flex items-center justify-center gap-1 text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
-                                                            <FiSave className="w-3 h-3" /> {editLoading ? 'Guardando...' : 'Guardar'}
-                                                        </button>
-                                                        <button onClick={() => setShowEditCliente(false)} className="flex-1 text-xs px-3 py-1.5 border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            {/* Modales reubicados fuera de este contenedor */}
 
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 {selectedCliente.precioCobrado && (
@@ -1115,16 +1609,61 @@ export default function AdminDashboard() {
                                                 <div className="space-y-2">
                                                     {pagosCliente.map(pago => {
                                                         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                                        const isEditing = editPagoId === pago.id;
                                                         return (
-                                                            <div key={pago.id} className={`flex items-center justify-between p-2.5 rounded-lg border text-xs ${pago.pagado ? 'bg-green-50 dark:bg-green-950/20 border-green-200/60 text-green-800 dark:text-green-300' : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 text-amber-800 dark:text-amber-300'}`}>
-                                                                <div>
-                                                                    <p className="font-semibold">{meses[pago.mes - 1]} {pago.anio}</p>
-                                                                    <p className="text-[10px] opacity-70">${pago.monto.toLocaleString()} MXN</p>
+                                                            <div key={pago.id} className={`flex flex-col gap-2 p-3 rounded-lg border text-xs shadow-sm transition-colors ${pago.pagado ? 'bg-green-50 dark:bg-green-950/20 border-green-200/60 text-green-800 dark:text-green-300' : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 text-amber-800 dark:text-amber-300'}`}>
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex flex-col gap-1">
+                                                                        <p className="font-bold text-sm">{meses[pago.mes - 1]} {pago.anio}</p>
+                                                                        {isEditing ? (
+                                                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                                                <span className="font-semibold text-muted-foreground">$</span>
+                                                                                <input 
+                                                                                    type="number" 
+                                                                                    value={editPagoMonto} 
+                                                                                    onChange={e => setEditPagoMonto(Number(e.target.value))} 
+                                                                                    className="w-20 h-7 px-2 text-xs border border-border rounded-md bg-background focus:ring-1 focus:ring-primary/50 text-foreground"
+                                                                                    autoFocus
+                                                                                />
+                                                                                <button onClick={() => saveEditPago(pago)} className="p-1 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"><FiSave className="w-3.5 h-3.5" /></button>
+                                                                                <button onClick={() => setEditPagoId(null)} className="p-1 text-red-600 hover:bg-red-100 rounded-md transition-colors"><FiX className="w-3.5 h-3.5" /></button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-2 group">
+                                                                                <p className="text-[11px] font-medium opacity-80">${pago.monto.toLocaleString()} MXN</p>
+                                                                                {!pago.pagado && (
+                                                                                    <button 
+                                                                                        onClick={() => { setEditPagoId(pago.id); setEditPagoMonto(pago.monto); }} 
+                                                                                        className="text-blue-500 hover:text-blue-700 opacity-40 group-hover:opacity-100 transition-opacity" 
+                                                                                        title="Editar monto a cobrar de este mes"
+                                                                                    >
+                                                                                        <FiEdit2 className="w-3 h-3" />
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {!pago.pagado && (
+                                                                            <button 
+                                                                                onClick={() => generarLinkMensualidad(pago)} 
+                                                                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md font-semibold text-[10px] text-white shadow-sm transition-all ${pago.linkPago ? 'bg-[#00B1EA] hover:bg-[#0090c0] hover:shadow-md' : 'bg-indigo-500 hover:bg-indigo-600'}`}
+                                                                                title={pago.linkPago ? 'Copiar link ya generado' : 'Generar link de MercadoPago para esta mensualidad'}
+                                                                            >
+                                                                                {pago.linkPago ? <><FiCopy className="w-3 h-3" /> Copiar Link</> : <><FiLink className="w-3 h-3" /> Crear Link</>}
+                                                                            </button>
+                                                                        )}
+                                                                        <button onClick={() => marcarPagado(selectedCliente.id, pago, !pago.pagado)}
+                                                                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md shadow-sm font-semibold text-[10px] transition-colors ${pago.pagado ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-amber-500 text-white hover:bg-amber-600'}`}>
+                                                                            {pago.pagado ? <><FiCheckCircle className="w-3 h-3" /> Pagado</> : <><FiXCircle className="w-3 h-3" /> Pendiente</>}
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
-                                                                <button onClick={() => marcarPagado(selectedCliente.id, pago, !pago.pagado)}
-                                                                    className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[10px] transition-colors ${pago.pagado ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-amber-500 text-white hover:bg-amber-600'}`}>
-                                                                    {pago.pagado ? <><FiCheckCircle className="w-3 h-3" /> Pagado</> : <><FiXCircle className="w-3 h-3" /> Pendiente</>}
-                                                                </button>
+                                                                {pago.linkPago && !pago.pagado && (
+                                                                    <div className="text-[9px] text-muted-foreground truncate w-full pt-1 border-t border-black/5 dark:border-white/5 mt-1 opacity-70">
+                                                                        Link adjunto y listo para enviar.
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}
@@ -1135,6 +1674,8 @@ export default function AdminDashboard() {
                                 )}
                             </div>
                         )}
+
+                        {/* Edit and Delete Modals have been relocated to the component root */}
                     </div>
                 )}
 
@@ -1534,6 +2075,79 @@ export default function AdminDashboard() {
                                 className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                             >
                                 {convertirLoading ? 'Procesando...' : <><FiUserCheck className="w-4 h-4" /> Confirmar</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ================= MODALES FLOTANTES COMPARTIDOS (EDICIÓN / ELIMINACIÓN DE CLIENTES) ================= */}
+            {showDeleteCliente && selectedCliente && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+                    <div className="bg-card w-full max-w-md border border-red-200/60 shadow-xl rounded-xl p-6">
+                        <div className="flex items-center gap-3 text-red-600 mb-4">
+                            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                                <FiTrash2 className="w-6 h-6" />
+                            </div>
+                            <h2 className="text-xl font-bold">Eliminar Cliente</h2>
+                        </div>
+                        <p className="text-base text-muted-foreground mb-6">
+                            ¿Estás seguro de que deseas eliminar permanentemente a <strong>{selectedCliente.nombre}</strong>? 
+                            Esta acción no se puede deshacer y borrará todo su historial asociado.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={() => setShowDeleteCliente(false)} className="px-4 py-2 border border-border rounded-lg hover:bg-muted font-medium transition-colors">
+                                Cancelar
+                            </button>
+                            <button onClick={eliminarCliente} className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-sm">
+                                Sí, eliminar cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showEditCliente && selectedCliente && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+                    <div className="bg-card w-full max-w-md border border-border shadow-xl rounded-xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
+                            <h2 className="text-lg font-bold">Editar Cliente: {selectedCliente.nombre}</h2>
+                            <button onClick={() => setShowEditCliente(false)} className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"><FiX /></button>
+                        </div>
+                        <div className="p-6 overflow-y-auto space-y-4">
+                            {[
+                                { key: 'nombre', label: 'Nombre Completo', type: 'text' },
+                                { key: 'proyecto', label: 'Proyecto / Servicio Activo', type: 'text' },
+                                { key: 'correo', label: 'Correo Electrónico', type: 'email' },
+                                { key: 'telefono', label: 'Teléfono', type: 'tel' }
+                            ].map(({ key, label, type }) => (
+                                <div key={key}>
+                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">{label}</label>
+                                    <input
+                                        type={type}
+                                        value={String(editClienteData[key as keyof Cliente] ?? '')}
+                                        onChange={e => setEditClienteData(prev => ({ ...prev, [key]: e.target.value }))}
+                                        className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    />
+                                </div>
+                            ))}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Precio Cobrado ($)</label>
+                                    <input type="number" value={editClienteData.precioCobrado ?? ''} onChange={e => setEditClienteData(prev => ({ ...prev, precioCobrado: e.target.value ? parseFloat(e.target.value) : null }))}
+                                        className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background font-mono focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Mensualidad ($)</label>
+                                    <input type="number" value={editClienteData.mensualidadMonto ?? ''} onChange={e => setEditClienteData(prev => ({ ...prev, mensualidadMonto: e.target.value ? parseFloat(e.target.value) : null }))}
+                                        className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background font-mono focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-border bg-muted/10 flex justify-end gap-3">
+                            <button onClick={() => setShowEditCliente(false)} disabled={editLoading} className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50">Cancelar</button>
+                            <button onClick={guardarEdicionCliente} disabled={editLoading} className="px-4 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 flex items-center gap-2 transition-colors disabled:opacity-50">
+                                {editLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiSave className="w-4 h-4" />}
+                                {editLoading ? 'Guardando...' : 'Guardar Cambios'}
                             </button>
                         </div>
                     </div>

@@ -675,16 +675,16 @@ export default function LandingPage() {
 
                         {/* Content Preview Display */}
                         <div className="w-full lg:w-2/3 lg:sticky lg:top-24">
-                            <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden aspect-[16/10] sm:aspect-video lg:aspect-[4/3] relative flex flex-col">
+                            <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden min-h-[450px] sm:aspect-video lg:aspect-[4/3] relative flex flex-col">
                                 {/* Browser Mockup Header */}
                                 <div className="h-10 bg-muted border-b border-border flex items-center px-4 gap-2 w-full shrink-0">
-                                    <div className="flex gap-1.5">
+                                    <div className="flex gap-1.5 shrink-0">
                                         <div className="w-3 h-3 rounded-full bg-[#FF5F56]"></div>
                                         <div className="w-3 h-3 rounded-full bg-[#FFBD2E]"></div>
                                         <div className="w-3 h-3 rounded-full bg-[#27C93F]"></div>
                                     </div>
-                                    <div className="mx-auto bg-background/50 border border-border/50 text-[10px] text-muted-foreground px-4 py-1 rounded w-1/2 flex justify-center backdrop-blur-sm truncate">
-                                        https://tu-empresa.com/{servicios.find(s => s.id === activeTab)?.title.toLowerCase().replace(/ /g, '-')}
+                                    <div className="mx-auto bg-background/50 border border-border/50 text-[10px] text-muted-foreground px-3 py-1 rounded flex-1 max-w-[70%] flex justify-center backdrop-blur-sm overflow-hidden">
+                                        <span className="truncate">https://tu-empresa.com/{servicios.find(s => s.id === activeTab)?.title.toLowerCase().replace(/ /g, '-')}</span>
                                     </div>
                                 </div>
 

@@ -19,14 +19,35 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # Cache de node_modules — se reutiliza si package-lock.json no cambia
+      # Ahorra ~2-3 min de npm ci en cada deploy que no añade dependencias
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Build
         env:
-          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-          VITE_MP_PUBLIC_KEY: ${{ secrets.VITE_MP_PUBLIC_KEY }}
-          VITE_MP_ACCESS_TOKEN: ${{ secrets.VITE_MP_ACCESS_TOKEN }}
+          # Firebase
+          VITE_FIREBASE_API_KEY:             ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN:         ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID:          ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET:      ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID:              ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # Servicios externos
+          VITE_GEMINI_API_KEY:               ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_MP_PUBLIC_KEY:                ${{ secrets.VITE_MP_PUBLIC_KEY }}
+          VITE_MP_ACCESS_TOKEN:              ${{ secrets.VITE_MP_ACCESS_TOKEN }}
+          VITE_SENTRY_DSN:                   ${{ secrets.VITE_SENTRY_DSN }}
         run: npm run build
 
       - name: Deploy via SCP to Hostinger

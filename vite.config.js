@@ -8,7 +8,7 @@ export default defineConfig({
         VitePWA({
             registerType: 'prompt',
             includeAssets: ['icons/*.png', 'favicon.ico'],
-            devOptions: { enabled: true },
+            devOptions: { enabled: false }, // desactivado en dev para evitar carga extra
             manifest: {
                 name: 'MisSolucionesIA',
                 short_name: 'MisSoluciones',
@@ -54,6 +54,26 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    // Vendors grandes separados → mejor cache del navegador entre versiones
+                    'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+                    'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+                    'vendor-charts': ['recharts'],
+                    'vendor-motion': ['framer-motion'],
+                    'vendor-dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+                    'vendor-pdf': ['jspdf'],
+                    'vendor-gemini': ['@google/generative-ai'],
+                },
+            },
+        },
+        // Aviso si algún chunk supera 400KB
+        chunkSizeWarningLimit: 400,
+        // Sin sourcemaps en producción (seguridad + tamaño)
+        sourcemap: false,
+    },
     define: {
         __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
     },

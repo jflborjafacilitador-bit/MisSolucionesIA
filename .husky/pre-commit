@@ -1,0 +1,15 @@
+#!/bin/sh
+# Hook pre-commit: verifica TypeScript antes de permitir el commit
+# Si hay errores de tipos, el commit se cancela automáticamente
+
+echo "🔍 Verificando TypeScript..."
+npx tsc --noEmit
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Commit cancelado: hay errores de TypeScript."
+  echo "   Corrige los errores arriba y vuelve a intentarlo."
+  exit 1
+fi
+
+echo "✅ TypeScript OK — procediendo con el commit"

@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    FiPieChart, FiUsers, FiDatabase,
-    FiShoppingCart, FiBriefcase, FiLayout,
+    FiDatabase, FiBriefcase,
     FiTrendingUp, FiCheckCircle, FiZap, FiSun, FiMoon
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import Magnetic from '../components/ui/Magnetic';
 import TiltCard from '../components/ui/TiltCard';
+import DemoMarketing from '../components/demos/DemoMarketing';
+import DemoEcommerce from '../components/demos/DemoEcommerce';
+import DemoCRM from '../components/demos/DemoCRM';
+import DemoAnalytics from '../components/demos/DemoAnalytics';
 
 export default function LandingPage() {
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -53,12 +56,12 @@ export default function LandingPage() {
                 {/* STITCH: Hero Section: Bento Grid Style */}
                 <section className="max-w-7xl mx-auto px-8 py-20">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-16 max-w-4xl">
-                        <span className="text-sm font-bold tracking-[0.2em] text-primary uppercase mb-4 block">Ethereal Atelier AI</span>
+                        <span className="text-sm font-bold tracking-[0.2em] text-primary uppercase mb-4 block">Desarrollo de Software a la Medida</span>
                         <h1 className="font-serif text-6xl md:text-7xl lg:text-8xl text-foreground leading-[1.1] mb-8" style={{ textWrap: 'balance' }}>
-                            Software Inteligente para Empresas de <span className="italic text-primary/80">Alto Calibre</span>.
+                            Herramientas Digitales para <span className="italic text-primary/80">Impulsar tu Negocio</span>.
                         </h1>
                         <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                            Elevamos la eficiencia operativa mediante una infraestructura de IA segura, amigable y estéticamente refinada orientada al mercado corporativo del 2026.
+                            Creamos plataformas robustas, tiendas en línea y sistemas de gestión personalizados para optimizar tus operaciones y aumentar tus ventas sin complicaciones técnicas.
                         </p>
                     </motion.div>
 
@@ -71,9 +74,9 @@ export default function LandingPage() {
                                 <div className="absolute bottom-10 left-10 text-white z-10" style={{ transform: "translateZ(40px)" }}>
                                     <div className="flex items-center space-x-2 mb-2 opacity-90">
                                         <FiZap className="text-yellow-400" />
-                                        <span className="text-xs uppercase tracking-widest font-bold">Core Intelligence</span>
+                                        <span className="text-xs uppercase tracking-widest font-bold">Tecnología Avanzada</span>
                                     </div>
-                                    <h3 className="font-serif text-3xl font-medium shadow-sm drop-shadow-md">Procesamiento de Lenguaje Natural</h3>
+                                    <h3 className="font-serif text-3xl font-medium shadow-sm drop-shadow-md">Integración de Inteligencia Artificial</h3>
                                 </div>
                             </div>
                         </TiltCard>
@@ -84,8 +87,8 @@ export default function LandingPage() {
                                     <FiTrendingUp className="text-6xl text-primary/20" />
                                 </div>
                                 <div className="relative z-10" style={{ transform: "translateZ(30px)" }}>
-                                    <h4 className="font-serif text-2xl mb-2 text-foreground">Análisis Predictivo</h4>
-                                    <p className="text-sm text-muted-foreground">Anticipe movimientos de mercado con precisión del 99.4% a través de ML.</p>
+                                    <h4 className="font-serif text-2xl mb-2 text-foreground">Automatización de Tareas</h4>
+                                    <p className="text-sm text-muted-foreground">Conecta tus aplicaciones y elimina el trabajo repetitivo manual para tu equipo de trabajo.</p>
                                 </div>
                             </div>
                         </TiltCard>
@@ -97,35 +100,23 @@ export default function LandingPage() {
                                     <FiCheckCircle className="text-white text-3xl" />
                                 </div>
                                 <div style={{ transform: "translateZ(30px)" }}>
-                                    <h4 className="font-serif text-2xl mb-1 text-white">Privacidad de Élite</h4>
-                                    <p className="text-sm text-white/80">Arquitectura "Zero-Knowledge" para proteger su propiedad intelectual en todo momento.</p>
+                                    <h4 className="font-serif text-2xl mb-1 text-white">Seguridad Total</h4>
+                                    <p className="text-sm text-white/80">Protegemos la información sensible de tu negocio y la de tus clientes corporativos.</p>
                                 </div>
                             </div>
                         </TiltCard>
                     </motion.div>
                 </section>
 
-                {/* STITCH: Trust Bar */}
-                <section className="bg-muted/20 py-12">
-                    <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 opacity-60 hover:opacity-100 transition-all">
-                        <span className="text-xs uppercase tracking-[0.3em] font-bold text-muted-foreground">Con la confianza de +500 empresas</span>
-                        <div className="flex flex-wrap justify-center gap-12 items-center">
-                            <span className="font-serif text-xl font-bold italic text-foreground/80">LUMINA</span>
-                            <span className="font-serif text-xl font-bold italic text-foreground/80">AXION</span>
-                            <span className="font-serif text-xl font-bold italic text-foreground/80">VERTICE</span>
-                            <span className="font-serif text-xl font-bold italic text-foreground/80">ORION.HQ</span>
-                            <span className="font-serif text-xl font-bold italic text-foreground/80">SOLIS</span>
-                        </div>
-                    </div>
-                </section>
+                {/* Fake Trust Bar Deleted intentionally to increase authenticity */}
 
                 {/* STITCH: Solutions Section Grid */}
                 <section id="portafolio" className="py-32 bg-background">
                     <div className="max-w-7xl mx-auto px-8">
                         <div className="flex flex-col md:flex-row md:items-end justify-between mb-20">
                             <div className="max-w-2xl">
-                                <h2 className="font-serif text-5xl text-foreground mb-6">Nuestro Portafolio a Medida</h2>
-                                <p className="text-lg text-muted-foreground">Diseñamos ecosistemas digitales que fusionan la estética artesanal con la potencia del silicio.</p>
+                                <h2 className="font-serif text-5xl text-foreground mb-6">Proyectos Destacados</h2>
+                                <p className="text-lg text-muted-foreground">Desarrollamos ecosistemas digitales enfocados y orientados a resultados tangibles. Aquí puede explorar las interfaces funcionales que creamos.</p>
                             </div>
                             <div className="mt-8 md:mt-0">
                                 <Link to="/portafolio" className="text-primary font-bold border-b-2 border-primary/50 py-2 cursor-pointer hover:text-primary/70 transition-colors">
@@ -135,44 +126,72 @@ export default function LandingPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {/* Card Web */}
-                            <Link to="/demo/8" className="bg-card p-10 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer">
-                                <FiLayout className="text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block" />
-                                <h3 className="font-serif text-2xl mb-4 text-foreground">Páginas Web & Landing Pages</h3>
-                                <p className="text-muted-foreground leading-relaxed flex-1">Experiencias inmersivas Ultra-Premium optimizadas para maximizar la conversión y captar leads.</p>
-                                <div className="mt-8 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                    Entrar a Demo Interactiva
+                            {/* Card Web Preview */}
+                            <Link to="/demo/8" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm relative">
+                                <div className="w-full h-48 bg-muted/20 border-b border-border/50 relative overflow-hidden pointer-events-none">
+                                    <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
+                                        <DemoMarketing />
+                                    </div>
+                                    <div className="absolute inset-0 bg-transparent mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                </div>
+                                <div className="p-8 flex flex-col flex-1">
+                                    <h3 className="font-serif text-2xl mb-4 text-foreground">Páginas Web B2B</h3>
+                                    <p className="text-muted-foreground leading-relaxed flex-1 text-sm">Presentación corporativa veloz, persuasiva y orientada a la simple captación de clientes.</p>
+                                    <div className="mt-6 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                        Probar Diseño Ahora
+                                    </div>
                                 </div>
                             </Link>
-                            {/* Card 1 */}
-                            <Link to="/demo/5" className="bg-card p-10 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer">
-                                <FiShoppingCart className="text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block" />
-                                <h3 className="font-serif text-2xl mb-4 text-foreground">E-Commerce Inteligente</h3>
-                                <p className="text-muted-foreground leading-relaxed flex-1">Tiendas que aprenden del comportamiento del cliente para ofrecer experiencias personalizadas.</p>
-                                <div className="mt-8 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                    Entrar a Demo Interactiva
+
+                            {/* Card Ecommerce Preview */}
+                            <Link to="/demo/5" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm relative">
+                                <div className="w-full h-48 bg-muted/20 border-b border-border/50 relative overflow-hidden pointer-events-none">
+                                    <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
+                                        <DemoEcommerce />
+                                    </div>
+                                </div>
+                                <div className="p-8 flex flex-col flex-1">
+                                    <h3 className="font-serif text-2xl mb-4 text-foreground">Tiendas Online Rápidas</h3>
+                                    <p className="text-muted-foreground leading-relaxed flex-1 text-sm">Comercio electrónico que guía ágilmente al usuario por el catálogo hasta concluir la compra final.</p>
+                                    <div className="mt-6 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                        Comprar en Tienda
+                                    </div>
                                 </div>
                             </Link>
-                            {/* Card 2 */}
-                            <Link to="/demo/1" className="bg-card p-10 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer">
-                                <FiUsers className="text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block" />
-                                <h3 className="font-serif text-2xl mb-4 text-foreground">CRMs de Nueva Era</h3>
-                                <p className="text-muted-foreground leading-relaxed flex-1">Gestione relaciones humanas, no solo datos. Automatización que reduce la carga administrativa.</p>
-                                <div className="mt-8 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                    Entrar a Demo Interactiva
+
+                            {/* Card CRM Preview */}
+                            <Link to="/demo/1" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm relative">
+                                <div className="w-full h-48 bg-muted/20 border-b border-border/50 relative overflow-hidden pointer-events-none flex items-start justify-center pt-8">
+                                    <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
+                                        <DemoCRM />
+                                    </div>
+                                </div>
+                                <div className="p-8 flex flex-col flex-1">
+                                    <h3 className="font-serif text-2xl mb-4 text-foreground">Gestor Inmobiliario CRM</h3>
+                                    <p className="text-muted-foreground leading-relaxed flex-1 text-sm">Organiza a todos tus contactos, sigue tareas clave y nunca pierdas un presupuesto a la vista.</p>
+                                    <div className="mt-6 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                        Abrir Panel
+                                    </div>
                                 </div>
                             </Link>
-                            {/* Card 3 */}
-                            <Link to="/demo/2" className="bg-card p-10 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer">
-                                <FiPieChart className="text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block" />
-                                <h3 className="font-serif text-2xl mb-4 text-foreground">Dashboards Ejecutivos</h3>
-                                <p className="text-muted-foreground leading-relaxed flex-1">Visualización de alto nivel. Tome decisiones críticas basadas en insights en segundos.</p>
-                                <div className="mt-8 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                    Entrar a Demo Interactiva
+
+                            {/* Card Analytics Preview */}
+                            <Link to="/demo/2" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm relative">
+                                <div className="w-full h-48 bg-background border-b border-border/50 relative overflow-hidden pointer-events-none">
+                                    <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
+                                        <DemoAnalytics />
+                                    </div>
+                                </div>
+                                <div className="p-8 flex flex-col flex-1">
+                                    <h3 className="font-serif text-2xl mb-4 text-foreground">Reportes Estadísticos</h3>
+                                    <p className="text-muted-foreground leading-relaxed flex-1 text-sm">Visualiza gráficas interactivas y mantente al tanto del rendimiento exacto de tu empresa en segundos.</p>
+                                    <div className="mt-6 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                        Ver Gráficas
+                                    </div>
                                 </div>
                             </Link>
                         </div>
@@ -185,9 +204,9 @@ export default function LandingPage() {
                     <div className="max-w-7xl mx-auto px-8 relative z-10">
                         <div className="flex flex-col lg:flex-row items-center gap-20">
                             <div className="lg:w-5/12 ml-0 lg:ml-10 order-2 lg:order-1">
-                                <h2 className="font-serif text-5xl text-foreground mb-8">Tecnología <span className="italic text-primary">Segura y Amigable</span></h2>
+                                <h2 className="font-serif text-5xl text-foreground mb-8">Aplicaciones Creadas Para Crecer</h2>
                                 <p className="text-lg text-muted-foreground mb-10 leading-loose">
-                                    En un mundo saturado de interfaces industriales frías, creemos en la calidez de la excelencia. Nuestra tecnología se integra orgánicamente en la cultura operativa de su empresa.
+                                    Nuestra tecnología está optimizada para que no te sientas atrapado. Diseñamos con código amigable y estándares claros para que lideres tu mercado.
                                 </p>
                                 <div className="space-y-8">
                                     <div className="flex items-start space-x-4">
@@ -195,8 +214,8 @@ export default function LandingPage() {
                                             <FiDatabase className="text-primary text-xl" />
                                         </div>
                                         <div>
-                                            <h5 className="font-serif text-xl mb-1 text-foreground">Confianza por Diseño</h5>
-                                            <p className="text-sm text-muted-foreground">Protocolos robustos y cifrados envueltos en una UX (User Experience) sin fricciones.</p>
+                                            <h5 className="font-serif text-xl mb-1 text-foreground">Bases Sólidas</h5>
+                                            <p className="text-sm text-muted-foreground">Estructuras tecnológicas transparentes ideales para crecer gradualmente y agregar más volumen en el futuro.</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start space-x-4">
@@ -204,8 +223,8 @@ export default function LandingPage() {
                                             <FiBriefcase className="text-primary text-xl" />
                                         </div>
                                         <div>
-                                            <h5 className="font-serif text-xl mb-1 text-foreground">Simplicidad Sofisticada</h5>
-                                            <p className="text-sm text-muted-foreground">Eliminamos el ruido técnico para que usted se enfoque en liderar su visión integral.</p>
+                                            <h5 className="font-serif text-xl mb-1 text-foreground">Enfocados al Negocio</h5>
+                                            <p className="text-sm text-muted-foreground">Nos quitamos de tecnicismos complejos para resolver los inconvenientes medulares que detienen tus ventas.</p>
                                         </div>
                                     </div>
                                 </div>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MisSolucionesIA | Software Inteligente para Empresas de Alto Calibre</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary-fixed-dim": "#d7c4a4",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#e9c349",
+              "secondary-fixed": "#f7e1a6",
+              "on-tertiary-fixed-variant": "#52452c",
+              "surface-dim": "#dbdad6",
+              "primary-container": "#d4af37",
+              "tertiary-container": "#c3b191",
+              "primary": "#735c00",
+              "inverse-on-surface": "#f2f0ed",
+              "inverse-primary": "#e9c349",
+              "surface-container-lowest": "#ffffff",
+              "background": "#fbf9f5",
+              "surface-bright": "#fbf9f5",
+              "secondary": "#6d5d2f",
+              "outline": "#7f7663",
+              "tertiary-fixed": "#f4e0be",
+              "on-primary-fixed": "#241a00",
+              "on-primary": "#ffffff",
+              "primary-fixed": "#ffe088",
+              "on-tertiary": "#ffffff",
+              "on-error": "#ffffff",
+              "surface-container-highest": "#e4e2de",
+              "surface-variant": "#e4e2de",
+              "on-primary-container": "#554300",
+              "surface-container": "#efeeea",
+              "on-background": "#1b1c1a",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#30312e",
+              "surface-container-high": "#eae8e4",
+              "secondary-container": "#f7e1a6",
+              "on-surface-variant": "#4d4635",
+              "error": "#ba1a1a",
+              "outline-variant": "#d0c5af",
+              "on-secondary-fixed": "#241a00",
+              "error-container": "#ffdad6",
+              "on-secondary-container": "#736334",
+              "surface": "#fbf9f5",
+              "tertiary": "#6b5c42",
+              "on-tertiary-fixed": "#241a06",
+              "surface-tint": "#735c00",
+              "secondary-fixed-dim": "#dac58d",
+              "on-primary-fixed-variant": "#574500",
+              "on-tertiary-container": "#51432b",
+              "on-surface": "#1b1c1a",
+              "on-secondary-fixed-variant": "#544519",
+              "surface-container-low": "#f5f3ef"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif", "serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #fbf9f5; color: #1b1c1a; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-nav { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .text-balance { text-wrap: balance; }
+    </style>
+</head>
+<body class="bg-background selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar (The Anchor) -->
+<nav class="fixed top-0 w-full z-50 bg-white/60 dark:bg-stone-900/60 backdrop-blur-xl shadow-[0_12px_40px_rgba(115,92,0,0.06)]">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="text-2xl font-serif font-bold text-stone-900 dark:text-stone-50">MisSolucionesIA</div>
+<div class="hidden md:flex items-center space-x-10 font-serif text-lg tracking-tight on-surface">
+<a class="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">Solutions</a>
+<a class="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">Portfolio</a>
+<a class="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">Pricing</a>
+<a class="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">FAQs</a>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-body font-semibold tracking-wide hover:opacity-90 active:scale-95 transition-all duration-200">
+                Schedule Demo
+            </button>
+</div>
+</nav>
+<main class="pt-24">
+<!-- Hero Section: Bento Grid Style -->
+<section class="max-w-7xl mx-auto px-8 py-20">
+<div class="mb-16 max-w-4xl">
+<span class="label-md font-bold tracking-[0.2em] text-primary uppercase mb-4 block">Ethereal Atelier AI</span>
+<h1 class="font-headline text-6xl md:text-7xl lg:text-8xl text-on-surface leading-[1.1] mb-8 text-balance">
+                    Software Inteligente para Empresas de <span class="italic text-secondary">Alto Calibre</span>.
+                </h1>
+<p class="font-body text-xl text-on-surface-variant max-w-2xl leading-relaxed">
+                    Elevamos la eficiencia operativa mediante una infraestructura de IA segura, amigable y estéticamente refinada.
+                </p>
+</div>
+<div class="grid grid-cols-12 grid-rows-2 gap-6 h-[700px]">
+<!-- Bento Large Item -->
+<div class="col-span-12 md:col-span-7 row-span-2 bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_12px_40px_rgba(115,92,0,0.06)] relative group">
+<img alt="AI Workspace" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Modern minimalist office workspace with sunlight streaming through large windows, featuring a high-end computer showing AI neural network visualizations" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxYUSQ2ZJ4Q8a4x4RmTyHVeovaRARkgkMxj0xHfQeXcRTdX816kTKEc7vCQjLx9FE1NnDd6ZoWA2nwmerMAmcw9sNVh82jUpJf1Pzf1dMFjWVkBAR9RsUQ3sYpbM8nCwdpvfuY-1-jkcSjbcGUrXFTf3SfCORDvunPzK1E03WJdgqSG0SwHOUmIMmujjfXVrXhANjAaT-R2fTOAlSufjdjqLv9pRqrpkc7JUiGDZVm8RZcVdf2TQEVU2W7PTXaWMDKVkCVkgJ6acU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/40 to-transparent"></div>
+<div class="absolute bottom-10 left-10 text-white">
+<div class="flex items-center space-x-2 mb-2">
+<span class="material-symbols-outlined text-primary-fixed">auto_awesome</span>
+<span class="font-label text-sm uppercase tracking-widest">Core Intelligence</span>
+</div>
+<h3 class="font-headline text-3xl">Procesamiento de Lenguaje Natural</h3>
+</div>
+</div>
+<!-- Bento Small Item Top -->
+<div class="col-span-12 md:col-span-5 row-span-1 bg-surface-container-low rounded-xl flex flex-col justify-end p-10 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8">
+<span class="material-symbols-outlined text-6xl text-primary/20">query_stats</span>
+</div>
+<div class="relative z-10">
+<h4 class="font-headline text-2xl mb-2">Análisis Predictivo</h4>
+<p class="font-body text-sm text-on-surface-variant">Anticipe movimientos de mercado con precisión del 99.4%.</p>
+</div>
+</div>
+<!-- Bento Small Item Bottom -->
+<div class="col-span-12 md:col-span-5 row-span-1 bg-primary text-on-primary rounded-xl p-10 flex items-center space-x-6">
+<div class="w-16 h-16 rounded-full bg-primary-fixed/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-fixed text-3xl" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h4 class="font-headline text-2xl mb-1">Privacidad de Élite</h4>
+<p class="font-body text-sm opacity-80">Arquitectura "Zero-Knowledge" para proteger su propiedad intelectual.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Trust Bar -->
+<section class="bg-surface-container-low py-12">
+<div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 opacity-60 grayscale hover:grayscale-0 transition-all">
+<span class="font-label text-xs uppercase tracking-[0.3em] font-bold text-on-surface-variant">Con la confianza de +500 empresas</span>
+<div class="flex flex-wrap justify-center gap-12 items-center">
+<span class="font-headline text-xl font-bold italic">LUMINA</span>
+<span class="font-headline text-xl font-bold italic">AXION</span>
+<span class="font-headline text-xl font-bold italic">VERTICE</span>
+<span class="font-headline text-xl font-bold italic">ORION.HQ</span>
+<span class="font-headline text-xl font-bold italic">SOLIS</span>
+</div>
+</div>
+</section>
+<!-- Solutions Section -->
+<section class="py-32 bg-surface">
+<div class="max-w-7xl mx-auto px-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-20">
+<div class="max-w-2xl">
+<h2 class="font-headline text-5xl text-on-surface mb-6">Soluciones a Medida</h2>
+<p class="font-body text-on-surface-variant">Diseñamos ecosistemas digitales que fusionan la estética artesanal con la potencia del silicio.</p>
+</div>
+<div class="mt-8 md:mt-0">
+<span class="text-primary font-bold border-b-2 border-primary-fixed py-2 cursor-pointer hover:text-secondary transition-colors">Ver portafolio completo</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1: E-Commerce -->
+<div class="bg-surface-container-lowest p-10 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(115,92,0,0.1)] group">
+<span class="material-symbols-outlined text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block">shopping_bag</span>
+<h3 class="font-headline text-2xl mb-4">E-Commerce Inteligente</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">Tiendas que aprenden del comportamiento del cliente para ofrecer experiencias de compra personalizadas en tiempo real.</p>
+</div>
+<!-- Card 2: CRM -->
+<div class="bg-surface-container-lowest p-10 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(115,92,0,0.1)] group">
+<span class="material-symbols-outlined text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block">diversity_3</span>
+<h3 class="font-headline text-2xl mb-4">CRMs de Nueva Era</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">Gestione relaciones humanas, no solo datos. Automatización empática que reduce la carga administrativa en un 60%.</p>
+</div>
+<!-- Card 3: Dashboards -->
+<div class="bg-surface-container-lowest p-10 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(115,92,0,0.1)] group">
+<span class="material-symbols-outlined text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block">monitoring</span>
+<h3 class="font-headline text-2xl mb-4">Dashboards Ejecutivos</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">Visualización de datos de alta fidelidad. Tome decisiones críticas basadas en insights generados por IA en segundos.</p>
+</div>
+<!-- Card 4: Portals -->
+<div class="bg-surface-container-lowest p-10 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(115,92,0,0.1)] group">
+<span class="material-symbols-outlined text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block">hub</span>
+<h3 class="font-headline text-2xl mb-4">Portales de Cliente</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">Espacios exclusivos y seguros para sus clientes premium, integrando soporte autónomo y gestión de activos.</p>
+</div>
+<!-- Card 5: Automation -->
+<div class="bg-surface-container-lowest p-10 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(115,92,0,0.1)] group">
+<span class="material-symbols-outlined text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block">auto_mode</span>
+<h3 class="font-headline text-2xl mb-4">Flujos Autónomos</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">Orquestación de procesos complejos que se auto-optimizan sin intervención humana constante.</p>
+</div>
+<!-- Card 6: Custom AI -->
+<div class="bg-surface-container-lowest p-10 rounded-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(115,92,0,0.1)] group">
+<span class="material-symbols-outlined text-4xl text-primary mb-6 group-hover:scale-110 transition-transform block">psychology</span>
+<h3 class="font-headline text-2xl mb-4">IA Generativa Propia</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">Entrenamos modelos exclusivos con su data histórica para crear una ventaja competitiva inimitable.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Why Choose Us: Asymmetrical Layout -->
+<section class="py-32 overflow-hidden">
+<div class="max-w-7xl mx-auto px-8">
+<div class="flex flex-col lg:flex-row items-center gap-20">
+<div class="lg:w-5/12 ml-0 lg:ml-20 order-2 lg:order-1">
+<h2 class="font-headline text-5xl text-on-surface mb-8">Tecnología <span class="italic">Segura y Amigable</span></h2>
+<p class="font-body text-lg text-on-surface-variant mb-10 leading-loose">
+                            En un mundo saturado de interfaces industriales frías, nosotros creemos en la calidez de la excelencia. Nuestra tecnología no solo resuelve problemas matemáticos, sino que se integra orgánicamente en la cultura de su empresa.
+                        </p>
+<div class="space-y-8">
+<div class="flex items-start space-x-4">
+<div class="w-12 h-12 bg-tertiary-fixed rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div>
+<h5 class="font-headline text-xl mb-1">Confianza por Diseño</h5>
+<p class="font-body text-sm text-on-surface-variant">Protocolos de encriptación de grado financiero envueltos en una experiencia de usuario sin fricciones.</p>
+</div>
+</div>
+<div class="flex items-start space-x-4">
+<div class="w-12 h-12 bg-tertiary-fixed rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<div>
+<h5 class="font-headline text-xl mb-1">Simplicidad Sofisticada</h5>
+<p class="font-body text-sm text-on-surface-variant">Eliminamos el ruido técnico para que usted se enfoque en liderar su visión.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:w-7/12 order-1 lg:order-2">
+<div class="relative">
+<div class="absolute -inset-4 bg-primary-fixed/20 blur-3xl rounded-full"></div>
+<img alt="AI Interface" class="relative z-10 rounded-xl shadow-[0_30px_60px_rgba(0,0,0,0.1)] border-8 border-surface-container-lowest" data-alt="High-fidelity interface design mockup showing elegant data analytics with gold and cream accents, floating on a soft ivory background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsyhzDPhLHJFYqMOMZ3dvn45QLuHYwgqOCuIyf9Cty722-YNmIRWL586MESBk-Ih_SvjOgfK6JcxffwIf4fg5aWqNGXiidly8Gsi_3oJHUxa9zi429Qw_4Cs8eOArZ8fqQf8Lntn-BnbRV6uJTfHTLMDcdlxG1P9tFt4rf7tBZB38GYGpwnAb5BAIbU0JZaP3sIeQ-nkNz8XTCNIA2Vng7PQ_caioi4pzK9LXdn9uu4j9rPN6u0soV6smOAVaDjIxuDzEh1-6NOdY"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 max-w-7xl mx-auto px-8">
+<div class="bg-primary-fixed p-16 rounded-2xl text-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[300px] absolute -top-20 -left-20 rotate-12">auto_awesome</span>
+</div>
+<h2 class="font-headline text-5xl text-on-primary-fixed mb-6 relative z-10">¿Listo para redefinir su futuro digital?</h2>
+<p class="font-body text-xl text-on-primary-fixed-variant mb-10 max-w-2xl mx-auto relative z-10">Iniciemos una conversación sobre cómo la inteligencia artificial puede potenciar su legado empresarial.</p>
+<div class="flex flex-col sm:flex-row justify-center items-center gap-6 relative z-10">
+<button class="bg-primary text-on-primary px-10 py-4 rounded-lg font-bold text-lg hover:shadow-xl transition-all">
+                        Agendar Consultoría Privada
+                    </button>
+<button class="bg-white/40 backdrop-blur-md text-on-primary-fixed px-10 py-4 rounded-lg font-bold text-lg hover:bg-white/60 transition-all">
+                        Explorar Portafolio
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-stone-50 dark:bg-stone-950 w-full border-t border-stone-200/30 dark:border-stone-800/30">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-12 px-8 py-16 max-w-7xl mx-auto">
+<div>
+<div class="text-xl font-serif font-bold text-stone-900 dark:text-stone-50 mb-6">MisSolucionesIA</div>
+<p class="font-sans text-sm tracking-wide text-stone-600 leading-relaxed">
+                    Artesanos de software inteligente para la élite empresarial global. Elevando el estándar tecnológico desde 2024.
+                </p>
+</div>
+<div>
+<h4 class="font-bold text-stone-900 dark:text-stone-100 text-sm uppercase tracking-widest mb-6">Company</h4>
+<ul class="space-y-4 font-sans text-sm text-stone-500 dark:text-stone-400">
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">About Us</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Solutions</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Portfolio</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Careers</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-stone-900 dark:text-stone-100 text-sm uppercase tracking-widest mb-6">Legal</h4>
+<ul class="space-y-4 font-sans text-sm text-stone-500 dark:text-stone-400">
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Privacy Policy</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Terms of Service</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Security Standards</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-stone-900 dark:text-stone-100 text-sm uppercase tracking-widest mb-6">Social</h4>
+<ul class="space-y-4 font-sans text-sm text-stone-500 dark:text-stone-400">
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">LinkedIn</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">Instagram</a></li>
+<li><a class="hover:text-amber-600 dark:hover:text-amber-400 transition-all" href="#">X (Twitter)</a></li>
+</ul>
+</div>
+</div>
+<div class="max-w-7xl mx-auto px-8 py-8 border-t border-stone-200/20">
+<p class="font-sans text-xs tracking-wide text-stone-500 text-center">
+                © 2026 MisSolucionesIA. Todos los derechos reservados.
+            </p>
+</div>
+</footer>
+</body></html>

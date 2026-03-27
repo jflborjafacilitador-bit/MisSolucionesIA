@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MisSolucionesIA | AI Excellence Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,300;0,400;0,600;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline-variant": "#d0c5af",
+              "outline": "#7f7663",
+              "on-secondary-container": "#736334",
+              "on-secondary-fixed-variant": "#544519",
+              "on-secondary": "#ffffff",
+              "surface-variant": "#e4e2de",
+              "secondary-fixed": "#f7e1a6",
+              "on-surface": "#1b1c1a",
+              "surface-container-highest": "#e4e2de",
+              "tertiary-fixed-dim": "#d7c4a4",
+              "on-tertiary-container": "#51432b",
+              "background": "#fbf9f5",
+              "inverse-surface": "#30312e",
+              "on-primary-fixed-variant": "#574500",
+              "tertiary-fixed": "#f4e0be",
+              "on-primary-container": "#554300",
+              "on-tertiary": "#ffffff",
+              "tertiary": "#6b5c42",
+              "surface-container-high": "#eae8e4",
+              "on-background": "#1b1c1a",
+              "surface-container-lowest": "#ffffff",
+              "surface-tint": "#735c00",
+              "primary": "#735c00",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed": "#241a00",
+              "on-primary-fixed": "#241a00",
+              "surface-dim": "#dbdad6",
+              "surface": "#fbf9f5",
+              "secondary-fixed-dim": "#dac58d",
+              "surface-bright": "#fbf9f5",
+              "primary-container": "#d4af37",
+              "secondary-container": "#f7e1a6",
+              "primary-fixed": "#ffe088",
+              "on-tertiary-fixed-variant": "#52452c",
+              "inverse-primary": "#e9c349",
+              "error-container": "#ffdad6",
+              "secondary": "#6d5d2f",
+              "on-tertiary-fixed": "#241a06",
+              "on-primary": "#ffffff",
+              "inverse-on-surface": "#f2f0ed",
+              "tertiary-container": "#c3b191",
+              "primary-fixed-dim": "#e9c349",
+              "on-error": "#ffffff",
+              "on-surface-variant": "#4d4635",
+              "error": "#ba1a1a",
+              "surface-container-low": "#f5f3ef",
+              "surface-container": "#efeeea"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-serif { font-family: 'Noto Serif', serif; }
+        .glass { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 z-50 bg-white/60 dark:bg-stone-900/60 backdrop-blur-xl h-screen w-72 border-none shadow-[0_12px_40px_rgba(115,92,0,0.06)]">
+<div class="mb-12 px-2">
+<h1 class="text-xl font-serif italic text-amber-700 dark:text-amber-500 font-serif font-light tracking-wide">MisSolucionesIA</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-stone-400 mt-1">AI Excellence</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Dashboard Active -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg transition-all scale-95 duration-300 text-amber-700 dark:text-amber-400 font-semibold border-r-2 border-amber-500 hover:bg-stone-50/50 dark:hover:bg-stone-800/50" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-serif font-light tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg transition-all scale-95 duration-300 text-stone-500 dark:text-stone-400 hover:text-amber-600 hover:bg-stone-50/50 dark:hover:bg-stone-800/50" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-serif font-light tracking-wide">CRM</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg transition-all scale-95 duration-300 text-stone-500 dark:text-stone-400 hover:text-amber-600 hover:bg-stone-50/50 dark:hover:bg-stone-800/50" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span class="font-serif font-light tracking-wide">Cotizaciones</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-stone-100/50">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center overflow-hidden">
+<img alt="MisSolucionesIA Luxury Logo" class="w-full h-full object-cover" data-alt="professional portrait of a confident business executive in a tailored suit against a soft cream background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwhpYpr0xZ8BrN8usH1v_eqGBf2IJWxLYT9lyK_gThhvNfVsdAv9I_0-W53tTlI4mXKw0hieGW8JjgZDu9-oaEK_vw8YOWxUBQqbcdJnllinWwIHjh3mfqxryT67ZcFwWkjsqb-pRT33GIuSu4Shbu3kYdTgH2lZq3XSugrpd11Yhnzud5z9-frkgnd-wa5GSzZGVBSi3rpZD885LbXUt6qOUuexEnwQ1NGMPmH6NOixjjaoVNhLNUoGUiRyyqv2fQUmj5_yBX0N8"/>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface">Alex V. Graham</p>
+<p class="text-[10px] text-stone-400">Partner Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Execution from JSON) -->
+<header class="fixed top-0 right-0 z-40 bg-[#fbf9f5]/80 dark:bg-stone-950/80 backdrop-blur-md w-[calc(100%-18rem)] h-16 flex justify-between items-center px-8 ml-72">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-lg">search</span>
+<input class="w-full bg-surface-container-highest border-none rounded-full py-2 pl-10 pr-4 text-sm font-sans tracking-tight focus:ring-2 focus:ring-amber-200 transition-all placeholder:text-stone-400" placeholder="Buscar proyectos o clientes..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="relative text-stone-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full border-2 border-[#fbf9f5]"></span>
+</button>
+<button class="text-stone-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-stone-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<span class="hidden md:block text-2xl font-serif text-stone-900 dark:text-stone-100 italic">M.I.</span>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden border border-amber-200">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="close-up profile photo of a modern professional male with a subtle smile and warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWY4-zUKzP7IQgF3hN3nVLhlYxD2feEEskXPa30DDChJFu5ht143nvfclaXEqGI2tValF0tLVnfBL8HaOWGeMqkIcQSe6-kUX33ak0oemDPOFk_2cvZIZbGee30mNJSqHLfhhSDKPl6DZDCPNvG7bSbWw8Eo0FRvukAOnJ6_QfRRkhqrWbVsh3yEaXMO2qLxaxUU1550WkMXlq11o95AAUTW-v65iZl4JzIMAUVdf4n5SzSUG_02LoG3AU5Fm_lOlZLxDKLY7OS7Q"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 pt-24 pb-12 px-12 min-h-screen bg-background">
+<!-- Welcome Header -->
+<header class="mb-12">
+<span class="text-label text-secondary font-medium tracking-widest uppercase text-[10px] mb-2 block">Panel de Control</span>
+<h2 class="text-5xl font-serif text-on-surface font-light tracking-tight">Bienvenido, <span class="italic text-primary">Alex</span></h2>
+<p class="text-stone-500 mt-3 font-body max-w-lg leading-relaxed">Su ecosistema de inteligencia artificial está operando con total seguridad y eficiencia hoy.</p>
+</header>
+<!-- KPI Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+<!-- Leads Card -->
+<div class="group relative overflow-hidden p-8 rounded-xl bg-surface-container-lowest shadow-[0_12px_40px_rgba(115,92,0,0.06)] border-none transition-all hover:-translate-y-1">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">bubble_chart</span>
+</div>
+<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+12.4%</span>
+</div>
+<h3 class="text-sm font-label text-stone-500 uppercase tracking-widest mb-1">Leads</h3>
+<div class="flex items-baseline gap-2">
+<p class="text-4xl font-serif text-on-surface">1,284</p>
+<span class="text-xs text-stone-400 font-light italic">Mensual</span>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+<span class="material-symbols-outlined text-9xl">bubble_chart</span>
+</div>
+</div>
+<!-- Clientes Card -->
+<div class="group relative overflow-hidden p-8 rounded-xl bg-surface-container-lowest shadow-[0_12px_40px_rgba(115,92,0,0.06)] border-none transition-all hover:-translate-y-1">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">diversity_3</span>
+</div>
+<span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">+3.2%</span>
+</div>
+<h3 class="text-sm font-label text-stone-500 uppercase tracking-widest mb-1">Clientes</h3>
+<div class="flex items-baseline gap-2">
+<p class="text-4xl font-serif text-on-surface">452</p>
+<span class="text-xs text-stone-400 font-light italic">Activos</span>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+<span class="material-symbols-outlined text-9xl">diversity_3</span>
+</div>
+</div>
+<!-- Ingresos Card -->
+<div class="group relative overflow-hidden p-8 rounded-xl bg-primary text-on-primary shadow-[0_20px_50px_rgba(115,92,0,0.15)] transition-all hover:-translate-y-1">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<span class="text-[10px] font-bold text-white bg-white/10 px-2 py-1 rounded">Meta 92%</span>
+</div>
+<h3 class="text-sm font-label text-primary-fixed uppercase tracking-widest mb-1">Ingresos</h3>
+<div class="flex items-baseline gap-2">
+<p class="text-4xl font-serif">$84,200</p>
+<span class="text-xs text-primary-fixed/80 font-light italic">USD</span>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-[0.1] group-hover:opacity-[0.2] transition-opacity">
+<span class="material-symbols-outlined text-9xl">payments</span>
+</div>
+</div>
+</div>
+<!-- Recent Activities Section (Editorial List) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<div class="lg:col-span-8">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h3 class="text-2xl font-serif text-on-surface italic">Recientes</h3>
+<p class="text-sm text-stone-400 mt-1">Interacciones de clientes y estatus de IA</p>
+</div>
+<button class="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2 group">
+                        Ver todo
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Interaction Item 1 -->
+<div class="flex items-center gap-6 p-6 rounded-xl bg-surface-container-low hover:bg-surface-container-highest transition-colors">
+<div class="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Automatización Inmobiliaria Altavista</h4>
+<p class="text-sm text-stone-500 font-light">Implementación de Agente de Ventas IA completada con éxito.</p>
+</div>
+<div class="text-right">
+<span class="block text-xs font-bold text-on-surface">Finalizado</span>
+<span class="block text-[10px] text-stone-400">Hace 2 horas</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]"></div>
+</div>
+<!-- Interaction Item 2 -->
+<div class="flex items-center gap-6 p-6 rounded-xl bg-surface-container-low hover:bg-surface-container-highest transition-colors">
+<div class="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-xl">contact_page</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Nueva Cotización: Consorcio Global</h4>
+<p class="text-sm text-stone-500 font-light">Análisis de infraestructura para optimización de procesos LLM.</p>
+</div>
+<div class="text-right">
+<span class="block text-xs font-bold text-on-surface">Pendiente</span>
+<span class="block text-[10px] text-stone-400">Hace 5 horas</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]"></div>
+</div>
+<!-- Interaction Item 3 -->
+<div class="flex items-center gap-6 p-6 rounded-xl bg-surface-container-low hover:bg-surface-container-highest transition-colors">
+<div class="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-secondary text-xl">insights</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-on-surface">Actualización de Sistema Kernell</h4>
+<p class="text-sm text-stone-500 font-light">Mejora de latencia en modelos predictivos regionales.</p>
+</div>
+<div class="text-right">
+<span class="block text-xs font-bold text-on-surface">Activo</span>
+<span class="block text-[10px] text-stone-400">Ayer, 18:45</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-primary-container shadow-[0_0_10px_rgba(212,175,55,0.4)]"></div>
+</div>
+</div>
+</div>
+<!-- Side Card: AI Health & Security -->
+<div class="lg:col-span-4 space-y-8">
+<div class="p-8 rounded-xl bg-surface-container-highest/50 border border-white/50 backdrop-blur-sm">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<h4 class="font-serif italic text-lg">Estatus de Seguridad</h4>
+</div>
+<p class="text-sm text-stone-600 leading-relaxed mb-6 font-light">Su entorno de IA es <span class="text-on-surface font-semibold">seguro y amigable</span>. No se detectaron anomalías en las últimas 24 horas.</p>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-xs">
+<span class="text-stone-500">Integridad de Datos</span>
+<span class="text-emerald-600 font-bold">100% Optimo</span>
+</div>
+<div class="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full w-full"></div>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-stone-500">Uptime de Modelos</span>
+<span class="text-amber-600 font-bold">99.9%</span>
+</div>
+<div class="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+<div class="bg-amber-400 h-full w-[99.9%]"></div>
+</div>
+</div>
+</div>
+<!-- Call to Action Card -->
+<div class="relative overflow-hidden p-8 rounded-xl bg-stone-900 text-stone-100 shadow-xl h-64 flex flex-col justify-end">
+<img alt="Abstract AI concept" class="absolute inset-0 w-full h-full object-cover opacity-40" data-alt="minimalist abstract 3D render of floating glass spheres and soft golden waves in a bright airy studio space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMSVxLBdAjwgkTDzvkKc3IV-doSg9W-TNeSY7N9AYPx5hZlyTxID9584gtxH5T1I33-sdtD3OWlL--NsBUoSwIICIuOFmAvsFEz5Q-ZblinrknBbXiNYwNyioVc88b2JvBaF9M8PPuYKWVLls702RCbn27nC2UBtrDJnHRSz1AO7cq8MxYmTs-n8Tn0Afx5qkEJBxIyiiwZlPuvCPyxMfkuw_1it32WfZMnDiLsXfzNKpArBJw4x5JcufHeXvkpTERFU462D6aNLo"/>
+<div class="relative z-10">
+<h5 class="font-serif text-xl mb-2">Nuevo Entrenamiento</h5>
+<p class="text-stone-400 text-xs mb-6 font-light">Optimice sus modelos personalizados con los nuevos sets de datos del CRM.</p>
+<button class="w-full py-3 bg-primary-container text-on-primary-container font-bold text-xs uppercase tracking-widest rounded-lg hover:bg-primary transition-colors">Iniciar Proceso</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="mt-24 pt-8 border-t border-stone-100 flex justify-between items-center">
+<p class="text-[10px] text-stone-400 uppercase tracking-widest">© 2026 MisSolucionesIA. Tecnología Segura y Amigable.</p>
+<div class="flex gap-8">
+<a class="text-[10px] text-stone-400 uppercase tracking-widest hover:text-primary transition-colors" href="#">Privacidad</a>
+<a class="text-[10px] text-stone-400 uppercase tracking-widest hover:text-primary transition-colors" href="#">Términos</a>
+<a class="text-[10px] text-stone-400 uppercase tracking-widest hover:text-primary transition-colors" href="#">Soporte</a>
+</div>
+</footer>
+</main>
+</body></html>

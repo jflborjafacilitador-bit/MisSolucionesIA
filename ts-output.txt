@@ -1,0 +1,1 @@
+src/pages/AdminDashboard.tsx(1540,176): error TS2304: Cannot find name 'FiX'.

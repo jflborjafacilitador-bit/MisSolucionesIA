@@ -76,36 +76,40 @@ export default function PartnerDashboard() {
     const chartData = monthlyData();
 
     return (
-        <div className="flex-1 bg-muted/10 min-h-screen">
-            <div className="bg-background border-b border-border shadow-sm">
+        <div className="flex-1 bg-background min-h-screen relative">
+            <div className="absolute inset-0 bg-gradient-to-bl from-primary/5 via-background to-background pointer-events-none" />
+            
+            <div className="bg-card/70 backdrop-blur-2xl border-b border-primary/10 sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-                        <img src="/icons/icon-192.png" alt="Logo" className="w-7 h-7 rounded-md" />
-                        Portal de Partners
+                    <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
+                        <img src="/icons/icon-192.png" alt="Logo" className="w-8 h-8 rounded-xl shadow-md border border-primary/20" />
+                        Portal de <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Partners</span>
                     </h1>
-                    <button onClick={handleLogout} className="text-sm flex items-center gap-2 text-destructive hover:text-destructive/80 font-medium">
+                    <button onClick={handleLogout} className="text-sm flex items-center gap-2 text-destructive hover:text-destructive/80 font-bold transition-colors bg-destructive/10 px-4 py-2 rounded-full">
                         <FiLogOut /> Cerrar Sesión
                     </button>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+            <div className="container mx-auto px-4 py-10 max-w-4xl space-y-8 relative z-10">
 
                 {/* Welcome + Code Card */}
-                <div className="bg-card border border-border/50 rounded-2xl shadow-sm p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="bg-card/70 backdrop-blur-xl border border-primary/10 rounded-[2.5rem] shadow-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-8 relative overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                     <div>
-                        <h2 className="text-2xl font-bold mb-2">¡Hola, {profile?.fullName || 'Emprendedor'}!</h2>
-                        <p className="text-muted-foreground">Comparte tu enlace único. Por cada solicitud enviada, lo registramos aquí.</p>
-                        <p className="text-xs text-muted-foreground mt-1">{user?.email}</p>
+                        <h2 className="text-3xl font-extrabold mb-2 tracking-tight">¡Hola, {profile?.fullName || 'Emprendedor'}!</h2>
+                        <p className="text-muted-foreground leading-relaxed">Comparte tu enlace único. Por cada solicitud que recibamos con tu código, te abonaremos la comisión automáticamente.</p>
+                        <p className="text-xs text-muted-foreground mt-2 opacity-60 font-mono">{user?.email}</p>
                     </div>
-                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 min-w-[250px] text-center">
-                        <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Tu Código Único</p>
-                        <div className="text-xl font-mono font-bold text-foreground bg-background py-2 px-4 rounded border shadow-inner mb-3">
+                    <div className="bg-background/50 backdrop-blur-md border border-primary/20 rounded-[2rem] p-6 min-w-[280px] text-center shadow-lg relative overflow-hidden">
+                        <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+                        <p className="text-xs font-bold text-primary uppercase tracking-widest mb-2 relative z-10">Tu Código Único</p>
+                        <div className="text-2xl font-mono font-bold text-foreground bg-primary/5 py-3 px-4 rounded-xl shadow-inner mb-4 relative z-10 border border-primary/10">
                             {profile?.partnerCode || 'SIN CÓDIGO'}
                         </div>
                         <button
                             onClick={copyReferralLink}
-                            className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-semibold py-2 rounded-md hover:bg-primary/90 transition-colors"
+                            className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-bold py-3 rounded-full shadow-[0_0_15px_rgba(251,191,36,0.2)] hover:shadow-[0_0_25px_rgba(251,191,36,0.4)] transition-all relative z-10 hover:scale-105"
                         >
                             <FiCopy /> Copiar Enlace
                         </button>
@@ -113,32 +117,32 @@ export default function PartnerDashboard() {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-card border border-border/50 rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div className="bg-blue-500/10 text-blue-500 p-3 rounded-full">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="bg-card/70 backdrop-blur-xl border border-primary/10 rounded-[2rem] shadow-xl p-6 flex flex-col gap-4 relative overflow-hidden hover:border-primary/20 transition-colors">
+                        <div className="bg-blue-500/10 text-blue-400 p-4 rounded-full w-fit border border-blue-500/20">
                             <FiUsers className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leads Totales</p>
-                            <p className="text-4xl font-black text-foreground">{leads.length}</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Leads Totales</p>
+                            <p className="text-4xl font-black text-foreground drop-shadow-md">{leads.length}</p>
                         </div>
                     </div>
-                    <div className="bg-card border border-green-500/30 rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div className="bg-green-500/10 text-green-500 p-3 rounded-full">
+                    <div className="bg-card/70 backdrop-blur-xl border border-primary/10 rounded-[2rem] shadow-xl p-6 flex flex-col gap-4 relative overflow-hidden hover:border-primary/20 transition-colors">
+                        <div className="bg-green-500/10 text-green-400 p-4 rounded-full w-fit border border-green-500/20">
                             <FiTrendingUp className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-semibold text-green-600 uppercase tracking-wider">Atendidos</p>
-                            <p className="text-4xl font-black text-green-600">{atendidas.length}</p>
+                            <p className="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">Atendidos</p>
+                            <p className="text-4xl font-black text-green-400 drop-shadow-md">{atendidas.length}</p>
                         </div>
                     </div>
-                    <div className="bg-card border border-yellow-500/30 rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div className="bg-yellow-500/10 text-yellow-500 p-3 rounded-full">
+                    <div className="bg-card/70 backdrop-blur-xl border border-primary/10 rounded-[2rem] shadow-xl p-6 flex flex-col gap-4 relative overflow-hidden hover:border-primary/20 transition-colors">
+                        <div className="bg-primary/10 text-primary p-4 rounded-full w-fit border border-primary/20">
                             <FiDollarSign className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-semibold text-yellow-600 uppercase tracking-wider">Comisión est. (5%)</p>
-                            <p className="text-2xl font-black text-yellow-600">${comisionEstimada.toLocaleString()} MXN</p>
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Comisión est. (5%)</p>
+                            <p className="text-3xl font-black text-primary drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">${comisionEstimada.toLocaleString()} <span className="text-lg">MXN</span></p>
                         </div>
                     </div>
                 </div>

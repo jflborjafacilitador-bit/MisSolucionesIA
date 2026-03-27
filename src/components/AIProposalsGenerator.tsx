@@ -37,16 +37,23 @@ Eres un experto consultor técnico de ventas B2B para una agencia de desarrollo 
 He aquí la solicitud, idea o contexto de un cliente potencial que me interesa cerrar:
 "${promptInput}"
 
+REGLAS DE PRECIOS PARA EL MERCADO MEXICANO (PyMEs):
+- Debes cotizar de forma realista y competitiva. No infles los precios.
+- Landing pages o webs sencillas: $5,000 a $9,000 MXN.
+- Sitios web corporativos / catálogos: $10,000 a $16,000 MXN.
+- Tiendas en línea o sistemas complejos: $18,000 a $35,000 MXN.
+- Retención / Mantenimiento mensual (Hosting, soporte): $1,200 a $2,500 MXN dependiendo del proyecto.
+
 Tu tarea es analizar esto y entregarme una ESTRUCTURA DE PARÁMETROS JSON VÁLIDOS (sin markdown, solo el objeto raw) para que yo pueda presentar esta propuesta y venderle el sistema.
 El JSON debe tener estrictamente esta estructura exacta:
 {
-  "resumenCliente": "Una breve frase interpretando cuál es el verdadero dolor comercial o necesidad de este cliente.",
-  "solucionPropuesta": "Describe en 2-3 párrafos máximo cuál sería la solución ideal (Ej: Una webapp con estas 3 características clave) orientada a dar impresiones 'premium'.",
-  "presupuestoEstimado": "Dime el rango en MXN (Ej. $20,000 - $35,000 MXN) que deberíamos cobrarle de enganche o desarrollo.",
-  "planDePagos": "Sugerencia de mensualidad de mantenimiento (Ej. $3,000 MXN mensuales por soporte y host).",
+  "resumenCliente": "Una breve frase interpretando cuál es el dolor comercial o necesidad de este cliente.",
+  "solucionPropuesta": "Describe en 2-3 párrafos cuál sería la solución ideal enfocada en dar resultados comerciales.",
+  "presupuestoEstimado": "Rango en MXN calculados en base a las REGLAS DE PRECIOS dadas. Ej: $8,000 - $12,000 MXN.",
+  "planDePagos": "Sugerencia de mensualidad de mantenimiento acorde a las REGLAS DE PRECIOS. Ej: $1,500 MXN mensuales.",
   "puntosDeVenta": [
-     "Viñeta 1: Un argumento fuerte de cómo esto le ahorra dinero o gana tiempo.",
-     "Viñeta 2: Otra razón para elegirnos.",
+     "Viñeta 1: Argumento de cómo ahorra dinero.",
+     "Viñeta 2: Razón técnica de peso.",
      "Viñeta 3: ...etc"
   ]
 }

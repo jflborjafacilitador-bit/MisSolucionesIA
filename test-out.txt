@@ -1,0 +1,1 @@
+src/test-jsx.tsx(1,8): error TS1259: Module '"C:/Users/Dynabook/OneDrive/Documentos/Aplicaciones IA Proyecto Nuevo/MisSolucionesIA/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag

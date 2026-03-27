@@ -5,7 +5,7 @@ import { useAuth } from '../lib/AuthContext';
 import { db } from '../lib/firebase';
 import AIAnalisis from '../components/AIAnalisis';
 import ClientePipeline, { Cliente, ClienteStatus } from '../components/ClientePipeline';
-import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw, FiUserCheck, FiCheckCircle, FiXCircle, FiCpu } from 'react-icons/fi';
+import { FiLogOut, FiMail, FiPhone, FiDollarSign, FiClock, FiUsers, FiBarChart2, FiToggleLeft, FiToggleRight, FiCopy, FiUserPlus, FiTrash2, FiSave, FiLink, FiExternalLink, FiRefreshCw, FiUserCheck, FiCheckCircle, FiXCircle, FiCpu, FiSun, FiMoon, FiGlobe } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { createMPPreference } from '../lib/mercadopago';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -97,6 +97,20 @@ export default function AdminDashboard() {
     const [isCustomProyecto, setIsCustomProyecto] = useState(false);
     const [editPagoId, setEditPagoId] = useState<string | null>(null);
     const [editPagoMonto, setEditPagoMonto] = useState<number>(0);
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
+    });
+
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -673,52 +687,86 @@ export default function AdminDashboard() {
     ];
 
     return (
-        <div className="flex-1 bg-muted/10 min-h-screen">
-            <div className="bg-background border-b border-border shadow-sm">
-                <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
-                            Admin Dashboard
-                            <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                                v1.2.0
-                            </span>
-                            <span className="flex items-center gap-1 text-xs text-green-500 font-normal">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
-                                Online
-                            </span>
-                            {/* A1: Identificador de usuario logueado */}
-                            {user?.email && (
-                                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                                    👤 {user.email}
-                                </span>
-                            )}
-                        </h1>
-                        <div className="flex gap-1 mt-2 flex-wrap">
-                            {tabs.map(tab => (
-                                <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                                    className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${activeTab === tab.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>
-                                    {tab.icon} {tab.label}
-                                </button>
-                            ))}
+        <div className="flex bg-background text-foreground font-sans min-h-screen">
+            {/* STITCH: SideNavBar (Fixed Left) */}
+            <aside className="fixed left-0 top-0 h-full flex flex-col p-6 z-50 bg-card/60 backdrop-blur-xl w-72 border-r border-border/50 shadow-[0_12px_40px_rgba(212,175,55,0.06)] hidden md:flex">
+                <div className="mb-6 px-2 shrink-0">
+                    <h1 className="text-2xl font-serif font-bold text-foreground tracking-tight">MisSolucionesIA</h1>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">Concebido para la Élite</p>
+                </div>
+                <nav className="flex-1 flex flex-col gap-1 overflow-y-auto pr-1 pb-2 scrollbar-thin scrollbar-thumb-border">
+                    {tabs.map(tab => (
+                        <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300 w-full text-left font-serif font-light tracking-wide ${activeTab === tab.key ? 'scale-95 text-primary border-r-2 border-primary bg-muted/50 font-semibold shadow-inner' : 'text-muted-foreground hover:text-primary hover:bg-muted/30 focus:scale-95'}`}>
+                            <div className="opacity-80 scale-110">{tab.icon}</div>
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="mt-auto pt-4 border-t border-border/50 shrink-0">
+                    <div className="flex flex-col gap-1.5">
+                        <button onClick={toggleTheme} className="w-full text-left flex items-center gap-3 px-3 py-1.5 text-sm text-foreground hover:bg-muted/50 rounded-md transition-colors">
+                            {theme === 'dark' ? <FiSun className="w-4 h-4 text-amber-500" /> : <FiMoon className="w-4 h-4 text-primary" />} 
+                            {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                        </button>
+                        <button onClick={fetchAll} className="w-full text-left flex items-center gap-3 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                            <FiRefreshCw className="w-4 h-4" /> Sincronizar Datos
+                        </button>
+                        <button onClick={() => navigate('/')} className="w-full text-left flex items-center gap-3 px-3 py-1.5 text-sm text-primary hover:bg-muted/50 rounded-md transition-colors font-medium">
+                            <FiGlobe className="w-4 h-4" /> Ir al Sitio Web
+                        </button>
+                        <button onClick={() => { logout(); navigate('/'); }} className="w-full text-left flex items-center gap-3 px-3 py-1.5 text-sm text-destructive hover:text-destructive/80 transition-colors">
+                            <FiLogOut className="w-4 h-4" /> Cerrar Sesión
+                        </button>
+                        <div className="flex items-center gap-3 px-2 mt-2 bg-muted/30 p-2 rounded-xl border border-border/50">
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/20 shrink-0">
+                                <img alt="Admin" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWY4-zUKzP7IQgF3hN3nVLhlYxD2feEEskXPa30DDChJFu5ht143nvfclaXEqGI2tValF0tLVnfBL8HaOWGeMqkIcQSe6-kUX33ak0oemDPOFk_2cvZIZbGee30mNJSqHLfhhSDKPl6DZDCPNvG7bSbWw8Eo0FRvukAOnJ6_QfRRkhqrWbVsh3yEaXMO2qLxaxUU1550WkMXlq11o95AAUTW-v65iZl4JzIMAUVdf4n5SzSUG_02LoG3AU5Fm_lOlZLxDKLY7OS7Q"/>
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="text-xs font-bold text-foreground truncate">{user?.email}</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {/* A2: Botón de actualización manual */}
-                        <button
-                            onClick={fetchAll}
-                            title="Actualizar datos"
-                            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                        >
-                            <FiRefreshCw className="w-3.5 h-3.5" /> Actualizar
+                </div>
+            </aside>
+
+            {/* STITCH: TopNavBar (Desktop Shifted, Mobile View) */}
+            <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md w-full md:pl-72 h-16 flex justify-between items-center px-4 md:px-8 border-b border-border/30 shadow-sm border-box">
+                <div className="flex items-center flex-1 max-w-xl">
+                    <span className="hidden md:block text-2xl font-serif text-foreground/80 italic font-bold">Conserjería Operativa</span>
+                    <span className="block md:hidden text-lg font-serif font-bold text-foreground">MisSolucionesIA</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate('/')} className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-muted hover:bg-primary/20 hover:text-primary text-foreground transition-colors" title="Ver Sitio Web">
+                        <FiGlobe className="w-4 h-4" />
+                    </button>
+                    <button onClick={toggleTheme} className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-muted hover:bg-muted/80 text-foreground transition-colors">
+                        {theme === 'dark' ? <FiSun className="w-4 h-4 text-amber-500" /> : <FiMoon className="w-4 h-4 text-primary" />}
+                    </button>
+                    <div className="md:hidden flex items-center gap-2">
+                        <button onClick={() => navigate('/')} className="text-xs px-2 py-1.5 rounded flex items-center text-primary font-bold bg-primary/10">
+                            <FiGlobe />
                         </button>
-                        <button onClick={() => { logout(); navigate('/'); }} className="text-sm flex items-center gap-2 text-destructive hover:text-destructive/80 font-medium">
-                            <FiLogOut /> Cerrar Sesión
+                        <select className="text-xs bg-muted/50 border border-border rounded py-1.5 px-2 font-bold focus:outline-none" value={activeTab} onChange={(e)=>setActiveTab(e.target.value as ActiveTab)}>
+                            {tabs.map(t=><option key={t.key} value={t.key}>{t.label}</option>)}
+                        </select>
+                        <button onClick={() => { logout(); navigate('/'); }} className="text-xs px-2 py-1.5 rounded flex items-center text-destructive font-bold bg-destructive/10">
+                            <FiLogOut />
                         </button>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div className="container mx-auto px-4 py-8">
+            {/* Main Wrapper matching the 2 open DIVS requirement */}
+            <div className="w-full md:ml-72 pt-24 pb-12 px-4 md:px-10 flex-1 relative">
+                
+                {/* Welcome Component Dashboard Stitch */}
+                <header className="mb-10 max-w-3xl">
+                    <span className="text-primary font-medium tracking-widest uppercase text-[10px] mb-2 block">Directiva de Procesos</span>
+                    <h2 className="text-4xl md:text-5xl font-serif text-foreground font-light tracking-tight">Centro <span className="italic text-primary">Neurálgico</span></h2>
+                    <p className="text-muted-foreground mt-3 font-body leading-relaxed text-sm">Entorno de alta confidencialidad. Los protocolos se encuentran <span className="text-green-500 font-bold bg-green-500/10 px-2 py-0.5 rounded ml-1">Estabilizados</span></p>
+                </header>
+
 
                 {/* ======= TAB: GENERADOR IA ======= */}
                 {activeTab === 'ia_proposals' && (
@@ -744,9 +792,10 @@ export default function AdminDashboard() {
 
                             {/* Modal Nuevo Lead */}
                             {showNewLeadModal && (
-                                <div className="p-5 bg-card border border-primary/20 rounded-xl shadow-md mb-6 animate-in fade-in zoom-in-95 duration-200">
-                                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2 mb-4">
-                                        <FiUserPlus className="text-primary w-5 h-5" /> Registrar Lead Manualmente
+                                <div className="p-6 bg-card/80 backdrop-blur-2xl border border-primary/20 rounded-[2rem] shadow-2xl mb-8 animate-in fade-in zoom-in-95 duration-200 relative overflow-hidden">
+                                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                                    <h3 className="font-extrabold text-xl text-foreground flex items-center gap-3 mb-6">
+                                        <div className="bg-primary/10 p-2 rounded-xl text-primary"><FiUserPlus className="w-5 h-5" /></div> Registrar Lead Manualmente
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
@@ -825,11 +874,12 @@ export default function AdminDashboard() {
                             )}
 
                             {viewMode === 'kanban' ? (
-                                <div className="flex gap-4">
-                                    <div className="flex-1 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden flex flex-col h-[82vh]">
-                                        <div className="p-4 border-b border-border bg-muted/30">
+                                <div className="flex gap-6">
+                                    <div className="flex-1 bg-card/70 backdrop-blur-xl border border-primary/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col h-[82vh] relative">
+                                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                                        <div className="p-5 border-b border-primary/10 bg-background/20 backdrop-blur-sm">
                                             <div className="flex justify-between items-center">
-                                                <h2 className="font-semibold text-lg">Master CRM — Kanban</h2>
+                                                <h2 className="font-extrabold text-lg tracking-tight">Master CRM <span className="text-muted-foreground font-normal ml-2">Pipeline</span></h2>
                                                 <div className="flex items-center gap-3">
                                                         <button
                                                             onClick={() => setViewMode('kanban')}
@@ -880,7 +930,8 @@ export default function AdminDashboard() {
 
                                     {/* PANEL DERECHO KANBAN UNIFICADO */}
                                     {(selected || selectedCliente) && (
-                                        <div className="w-[380px] flex-shrink-0 bg-card border border-border rounded-xl p-5 space-y-4 overflow-y-auto max-h-[82vh] shadow-sm">
+                                        <div className="w-[420px] flex-shrink-0 bg-card/80 backdrop-blur-2xl border border-primary/10 rounded-[2.5rem] p-6 space-y-6 overflow-y-auto max-h-[82vh] shadow-2xl relative">
+                                            <div className="absolute left-0 top-10 bottom-10 w-px bg-gradient-to-b from-transparent via-primary/10 to-transparent" />
                                             {selected ? (
                                                 /* DETALLE COTIZACION */
                                                 <>
@@ -907,7 +958,7 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </div>
 
-                                                    <div className="bg-background border border-border rounded-xl p-3">
+                                                    <div className="bg-background/40 backdrop-blur-md border border-primary/10 rounded-2xl p-4 shadow-inner">
                                                         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Precios Cotizados (MXN)</p>
                                                         <div className="space-y-3">
                                                             <div className="flex gap-2">
@@ -928,7 +979,7 @@ export default function AdminDashboard() {
                                                     </div>
 
                                                     {selected.precioCotizado && (
-                                                        <div className={`rounded-xl border p-3 ${selected.status === 'atendida' ? 'bg-green-50 dark:bg-green-950/20 border-green-300/50' : 'bg-muted/30 border-border'}`}>
+                                                        <div className={`rounded-2xl border p-4 backdrop-blur-md ${selected.status === 'atendida' ? 'bg-green-500/5 border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.05)]' : 'bg-background/40 border-primary/10'}`}>
                                                             <div className="flex items-center justify-between mb-2">
                                                                 <div className="flex items-center gap-2">
                                                                     <FiLink className="text-[#00B1EA] w-3 h-3" />
@@ -1017,10 +1068,11 @@ export default function AdminDashboard() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                    <div className="lg:col-span-1 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden flex flex-col h-[82vh]">
-                                        <div className="p-4 border-b border-border bg-muted/30">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <h2 className="font-semibold text-lg flex gap-2">Listado</h2>
+                                    <div className="lg:col-span-1 bg-card/70 backdrop-blur-xl border border-primary/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col h-[82vh] relative">
+                                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                                        <div className="p-5 border-b border-primary/10 bg-background/20 backdrop-blur-sm">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h2 className="font-extrabold text-lg tracking-tight">Directorio</h2>
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex items-center border border-border rounded-md overflow-hidden">
                                                         <button onClick={() => setViewMode('lista')}
@@ -1101,7 +1153,8 @@ export default function AdminDashboard() {
 
                                     <div className="lg:col-span-2">
                                         {selected ? (
-                                            <div className="bg-card border border-border/50 rounded-xl shadow-sm p-6 lg:p-8 space-y-6">
+                                            <div className="bg-card/80 backdrop-blur-2xl border border-primary/10 rounded-[2.5rem] shadow-2xl p-8 lg:p-10 space-y-8 relative overflow-hidden">
+                                                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                                     <div>
                                                         <h2 className="text-2xl font-bold">{selected.nombre}</h2>
@@ -1277,7 +1330,8 @@ export default function AdminDashboard() {
                                                 )}
                                             </div>
                                         ) : selectedCliente ? (
-                                            <div className="bg-card border border-border/50 rounded-xl shadow-sm p-6 lg:p-8 space-y-6">
+                                            <div className="bg-card/80 backdrop-blur-2xl border border-primary/10 rounded-[2.5rem] shadow-2xl p-8 lg:p-10 space-y-8 relative overflow-hidden">
+                                                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                                     <div>
                                                         <h2 className="text-2xl font-bold">{selectedCliente.nombre}</h2>
@@ -1375,7 +1429,7 @@ export default function AdminDashboard() {
                                                                             </div>
                                                                         </div>
                                                                         {pago.linkPago && !pago.pagado && (
-                                                                            <div className="text-[9px] text-muted-foreground truncate w-full pt-1 border-t border-black/5 dark:border-white/5 mt-1 opacity-70">
+                                                                            <div className="text-[9px] text-muted-foreground truncate w-full pt-1 border-t border-black/5 dark:border-primary/10 mt-1 opacity-70">
                                                                                 Link adjunto y listo para enviar.
                                                                             </div>
                                                                         )}

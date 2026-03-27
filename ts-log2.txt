@@ -1,0 +1,5 @@
+src/components/MasterKanbanBoard.tsx(5,41): error TS6133: 'FiDollarSign' is declared but its value is never read.
+src/pages/AdminDashboard.tsx(12,1): error TS6133: 'KanbanBoard' is declared but its value is never read.
+src/pages/AdminDashboard.tsx(16,1): error TS6133: 'MasterKanbanBoard' is declared but its value is never read.
+src/test-jsx.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/test-jsx.tsx(3,7): error TS6133: 'Test' is declared but its value is never read.

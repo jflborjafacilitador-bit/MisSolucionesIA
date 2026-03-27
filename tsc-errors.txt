@@ -1,0 +1,3 @@
+src/components/MasterKanbanBoard.tsx(5,41): error TS6133: 'FiDollarSign' is declared but its value is never read.
+src/pages/AdminDashboard.tsx(12,1): error TS6133: 'KanbanBoard' is declared but its value is never read.
+src/pages/AdminDashboard.tsx(768,161): error TS2367: This comparison appears to be unintentional because the types '"kanban"' and '"lista"' have no overlap.

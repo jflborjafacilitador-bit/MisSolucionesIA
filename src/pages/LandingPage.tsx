@@ -7,6 +7,7 @@ import {
 import { Link } from 'react-router-dom';
 import Magnetic from '../components/ui/Magnetic';
 import TiltCard from '../components/ui/TiltCard';
+import DemoPreview from '../components/ui/DemoPreview';
 import DemoMarketing from '../components/demos/DemoMarketing';
 import DemoEcommerce from '../components/demos/DemoEcommerce';
 import DemoCRM from '../components/demos/DemoCRM';
@@ -221,15 +222,10 @@ export default function LandingPage() {
 
                             {/* Card Web Preview */}
                             <Link to="/demo/8" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm">
-                                <div className="w-full h-40 bg-muted/20 border-b border-border/50 relative overflow-hidden pointer-events-none">
-                                    {/* Preview escalado — contenedor con clip para evitar overflow */}
-                                    <div className="absolute inset-0 overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
-                                            <DemoMarketing />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-5 sm:p-6 flex flex-col flex-1">
+                                <DemoPreview visibleHeight={160}>
+                                    <DemoMarketing />
+                                </DemoPreview>
+                                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-border/50">
                                     <h3 className="font-serif text-xl sm:text-2xl mb-2 sm:mb-3 text-foreground">Páginas Web B2B</h3>
                                     <p className="text-muted-foreground leading-relaxed flex-1 text-xs sm:text-sm">Presentación corporativa veloz, persuasiva y orientada a la simple captación de clientes.</p>
                                     <div className="mt-4 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
@@ -241,14 +237,10 @@ export default function LandingPage() {
 
                             {/* Card Ecommerce */}
                             <Link to="/demo/5" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm">
-                                <div className="w-full h-40 bg-muted/20 border-b border-border/50 relative overflow-hidden pointer-events-none">
-                                    <div className="absolute inset-0 overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
-                                            <DemoEcommerce />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-5 sm:p-6 flex flex-col flex-1">
+                                <DemoPreview visibleHeight={160}>
+                                    <DemoEcommerce />
+                                </DemoPreview>
+                                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-border/50">
                                     <h3 className="font-serif text-xl sm:text-2xl mb-2 sm:mb-3 text-foreground">Tiendas Online Rápidas</h3>
                                     <p className="text-muted-foreground leading-relaxed flex-1 text-xs sm:text-sm">Comercio electrónico que guía ágilmente al usuario por el catálogo hasta concluir la compra final.</p>
                                     <div className="mt-4 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
@@ -260,14 +252,10 @@ export default function LandingPage() {
 
                             {/* Card CRM */}
                             <Link to="/demo/1" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm">
-                                <div className="w-full h-40 bg-muted/20 border-b border-border/50 relative overflow-hidden pointer-events-none">
-                                    <div className="absolute inset-0 overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
-                                            <DemoCRM />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-5 sm:p-6 flex flex-col flex-1">
+                                <DemoPreview visibleHeight={160}>
+                                    <DemoCRM />
+                                </DemoPreview>
+                                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-border/50">
                                     <h3 className="font-serif text-xl sm:text-2xl mb-2 sm:mb-3 text-foreground">Gestor Inmobiliario CRM</h3>
                                     <p className="text-muted-foreground leading-relaxed flex-1 text-xs sm:text-sm">Organiza a todos tus contactos, sigue tareas clave y nunca pierdas un presupuesto a la vista.</p>
                                     <div className="mt-4 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
@@ -279,14 +267,10 @@ export default function LandingPage() {
 
                             {/* Card Analytics */}
                             <Link to="/demo/2" className="bg-card rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(212,175,55,0.1)] border border-border/50 group flex flex-col cursor-pointer overflow-hidden shadow-sm">
-                                <div className="w-full h-40 bg-background border-b border-border/50 relative overflow-hidden pointer-events-none">
-                                    <div className="absolute inset-0 overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
-                                            <DemoAnalytics />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-5 sm:p-6 flex flex-col flex-1">
+                                <DemoPreview visibleHeight={160}>
+                                    <DemoAnalytics />
+                                </DemoPreview>
+                                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-border/50">
                                     <h3 className="font-serif text-xl sm:text-2xl mb-2 sm:mb-3 text-foreground">Reportes Estadísticos</h3>
                                     <p className="text-muted-foreground leading-relaxed flex-1 text-xs sm:text-sm">Visualiza gráficas interactivas y mantente al tanto del rendimiento exacto de tu empresa en segundos.</p>
                                     <div className="mt-4 text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">

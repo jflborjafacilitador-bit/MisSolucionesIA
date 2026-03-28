@@ -81,17 +81,17 @@ export default function CotizacionPage() {
             >
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
                 
-                <div className="bg-gradient-to-b from-primary/10 to-transparent p-10 md:p-14 text-center border-b border-primary/10 relative">
+                <div className="bg-gradient-to-b from-primary/10 to-transparent p-6 sm:p-10 md:p-14 text-center border-b border-primary/10 relative">
                     <div className="absolute inset-0 bg-noise opacity-20 mix-blend-overlay pointer-events-none"></div>
-                    <h1 className="text-4xl md:text-6xl font-extrabold text-foreground tracking-tight mb-6">
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-foreground tracking-tight mb-4 sm:mb-6">
                         Inicia tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB]">Visión</span>
                     </h1>
-                    <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed">
+                    <p className="text-muted-foreground text-base sm:text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed">
                         Detalla tu proyecto. Nuestra IA y equipo de ingeniería diseñarán una propuesta tecnológica exclusiva para elevar tu negocio.
                     </p>
                 </div>
 
-                <div className="p-8 md:p-14 relative">
+                <div className="p-5 sm:p-8 md:p-14 relative">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 relative z-10">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
@@ -175,7 +175,7 @@ export default function CotizacionPage() {
                         </div>
 
                         {/* Campo de Código de Referido */}
-                        <div className="bg-primary/5 border border-dashed border-primary/30 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group hover:border-primary/50 transition-colors duration-500">
+                        <div className="bg-primary/5 border border-dashed border-primary/30 rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 space-y-4 relative overflow-hidden group hover:border-primary/50 transition-colors duration-500">
                             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             <label className="relative z-10 text-sm font-bold tracking-wide uppercase text-foreground flex items-center gap-3">
                                 <span className="text-xl">🤝</span> Alianza Estratégica <span className="text-xs font-normal opacity-60 normal-case">(Opcional)</span>

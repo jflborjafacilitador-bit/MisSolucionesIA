@@ -25,28 +25,30 @@ const demos = [
 
 export default function DemosIndex() {
     return (
-        <div className="pt-32 pb-20 max-w-7xl mx-auto px-8 min-h-screen fade-in-up">
-            <h1 className="text-5xl font-serif text-foreground mb-4">Portafolio Interactivo</h1>
-            <p className="text-lg text-muted-foreground mb-16 max-w-3xl">Explora en directo todas nuestras instancias demostrativas de interfaz. Estos sandboxes están diseñados para mostrar la fluidez y arquitectura que podrías tener en tu propia empresa. Ningún cambio que hagas aquí será persistente.</p>
+        <div className="pt-24 sm:pt-32 pb-12 sm:pb-20 max-w-7xl mx-auto px-4 sm:px-8 min-h-screen fade-in-up">
+            <h1 className="text-3xl sm:text-5xl font-serif text-foreground mb-3 sm:mb-4">Portafolio Interactivo</h1>
+            <p className="text-base sm:text-lg text-muted-foreground mb-10 sm:mb-16 max-w-3xl">Explora en directo todas nuestras instancias demostrativas. Estos sandboxes muestran la fluidez y arquitectura que podrías tener en tu empresa. Ningún cambio es persistente.</p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 {demos.map(d => (
                     <Link key={d.id} to={`/demo/${d.id}`} className="bg-card flex flex-col rounded-2xl border border-border/50 shadow-sm hover:shadow-[0_20px_50px_rgba(40,240,250,0.05)] hover:-translate-y-2 transition-all duration-300 group overflow-hidden">
                         
                         {/* Micro-Rendered Preview Frame */}
-                        <div className="w-full h-40 bg-background border-b border-border/50 relative overflow-hidden pointer-events-none flex items-start justify-center pt-8">
-                            <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
-                                <d.Component />
+                        <div className="w-full h-32 sm:h-40 bg-background border-b border-border/50 relative overflow-hidden pointer-events-none">
+                            <div className="absolute inset-0 overflow-hidden">
+                                <div className="absolute top-0 left-0 w-[400%] h-[400%] origin-top-left scale-[0.25]">
+                                    <d.Component />
+                                </div>
                             </div>
-                            <div className="absolute inset-0 bg-transparent mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
 
-                        <div className="p-8 flex flex-col flex-1">
-                            <h2 className="text-2xl font-serif text-foreground mb-3">{d.name}</h2>
-                            <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-8">{d.desc}</p>
-                            <div className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity mt-auto">
+                        <div className="p-4 sm:p-6 flex flex-col flex-1">
+                            <h2 className="text-base sm:text-2xl font-serif text-foreground mb-1 sm:mb-3">{d.name}</h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed flex-1 hidden sm:block mb-4">{d.desc}</p>
+                            <div className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity mt-auto">
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                                Probar Sandbox
+                                <span className="hidden sm:inline">Probar Sandbox</span>
+                                <span className="sm:hidden">Ver</span>
                             </div>
                         </div>
                     </Link>

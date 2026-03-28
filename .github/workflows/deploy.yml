@@ -36,18 +36,11 @@ jobs:
 
       - name: Build
         env:
-          # Firebase
-          VITE_FIREBASE_API_KEY:             ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN:         ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID:          ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET:      ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID:              ${{ secrets.VITE_FIREBASE_APP_ID }}
-          # Servicios externos
-          VITE_GEMINI_API_KEY:               ${{ secrets.VITE_GEMINI_API_KEY }}
-          VITE_MP_PUBLIC_KEY:                ${{ secrets.VITE_MP_PUBLIC_KEY }}
-          VITE_MP_ACCESS_TOKEN:              ${{ secrets.VITE_MP_ACCESS_TOKEN }}
-          VITE_SENTRY_DSN:                   ${{ secrets.VITE_SENTRY_DSN }}
+          # Firebase está hardcodeado en src/lib/firebase.ts (apiKey pública por diseño)
+          VITE_GEMINI_API_KEY:   ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_MP_PUBLIC_KEY:    ${{ secrets.VITE_MP_PUBLIC_KEY }}
+          VITE_MP_ACCESS_TOKEN:  ${{ secrets.VITE_MP_ACCESS_TOKEN }}
+          # VITE_SENTRY_DSN:     ${{ secrets.VITE_SENTRY_DSN }}  ← activar cuando se configure Sentry
         run: npm run build
 
       - name: Deploy via SCP to Hostinger

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { FiTrendingUp, FiTrendingDown, FiPieChart, FiDollarSign, FiUsers, FiActivity } from 'react-icons/fi';
+import SizedContainer from '../ui/SizedContainer';
 
 const dataMeses = [
     { name: 'Ene', ingresos: 45000, usuarios: 1200 },
@@ -121,8 +122,9 @@ export default function DemoAnalytics() {
                     <h3 className="font-bold mb-6">Crecimiento de Ingresos vs Usuarios</h3>
                     <div className="flex-1 min-h-0 relative">
                         <div className="absolute inset-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={dataMeses} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <SizedContainer className="w-full h-full">
+                                {(w, h) => (
+                                <AreaChart width={w} height={h} data={dataMeses} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -141,7 +143,8 @@ export default function DemoAnalytics() {
                                     <Area yAxisId="left" type="monotone" dataKey="ingresos" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" activeDot={{ r: 6, strokeWidth: 0 }} />
                                     <Area yAxisId="right" type="monotone" dataKey="usuarios" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorUsuarios)" activeDot={{ r: 6, strokeWidth: 0 }} />
                                 </AreaChart>
-                            </ResponsiveContainer>
+                                )}
+                            </SizedContainer>
                         </div>
                     </div>
                 </div>
@@ -153,8 +156,9 @@ export default function DemoAnalytics() {
                         <h3 className="font-bold mb-2">Fuentes de Adquisición</h3>
                         <div className="flex-1 min-h-0 relative">
                             <div className="absolute inset-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
+                                <SizedContainer className="w-full h-full">
+                                    {(w, h) => (
+                                    <PieChart width={w} height={h}>
                                         <Pie
                                             data={dataFuentes}
                                             cx="50%"
@@ -171,7 +175,8 @@ export default function DemoAnalytics() {
                                         </Pie>
                                         <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                                     </PieChart>
-                                </ResponsiveContainer>
+                                    )}
+                                </SizedContainer>
                                 {/* Number in center of pie */}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                     <span className="text-2xl font-black">10.5k</span>
@@ -186,8 +191,9 @@ export default function DemoAnalytics() {
                         <h3 className="font-bold mb-4">Conversión por Plan</h3>
                         <div className="flex-1 min-h-0 relative">
                             <div className="absolute inset-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={[
+                                <SizedContainer className="w-full h-full">
+                                    {(w, h) => (
+                                    <BarChart width={w} height={h} data={[
                                         { name: 'Básico', ventas: 400 },
                                         { name: 'Pro', ventas: 300 },
                                         { name: 'Enterprise', ventas: 150 },
@@ -197,7 +203,8 @@ export default function DemoAnalytics() {
                                         <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 'bold' }} />
                                         <Bar dataKey="ventas" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30} />
                                     </BarChart>
-                                </ResponsiveContainer>
+                                    )}
+                                </SizedContainer>
                             </div>
                         </div>
                     </div>

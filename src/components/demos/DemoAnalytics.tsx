@@ -119,28 +119,30 @@ export default function DemoAnalytics() {
                 {/* Main Graph */}
                 <div className="lg:col-span-2 bg-card p-5 rounded-2xl border border-border/50 shadow-sm flex flex-col h-[400px]">
                     <h3 className="font-bold mb-6">Crecimiento de Ingresos vs Usuarios</h3>
-                    <div className="flex-1 w-full min-h-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={dataMeses} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorUsuarios" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} dy={10} />
-                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickFormatter={(value) => `$${value / 1000}k`} dx={-10} />
-                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} dx={10} />
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} className="dark:stroke-neutral-800" />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Area yAxisId="left" type="monotone" dataKey="ingresos" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" activeDot={{ r: 6, strokeWidth: 0 }} />
-                                <Area yAxisId="right" type="monotone" dataKey="usuarios" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorUsuarios)" activeDot={{ r: 6, strokeWidth: 0 }} />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <div className="flex-1 min-h-0 relative">
+                        <div className="absolute inset-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={dataMeses} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorUsuarios" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} dy={10} />
+                                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} tickFormatter={(value) => `$${value / 1000}k`} dx={-10} />
+                                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888888' }} dx={10} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} className="dark:stroke-neutral-800" />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Area yAxisId="left" type="monotone" dataKey="ingresos" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorIngresos)" activeDot={{ r: 6, strokeWidth: 0 }} />
+                                    <Area yAxisId="right" type="monotone" dataKey="usuarios" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorUsuarios)" activeDot={{ r: 6, strokeWidth: 0 }} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
 
@@ -149,30 +151,32 @@ export default function DemoAnalytics() {
                     {/* Pie Chart */}
                     <div className="bg-card p-5 rounded-2xl border border-border/50 shadow-sm flex-1 flex flex-col min-h-[250px] lg:min-h-0">
                         <h3 className="font-bold mb-2">Fuentes de Adquisición</h3>
-                        <div className="flex-1 w-full min-h-0 relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={dataFuentes}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={45}
-                                        outerRadius={70}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {dataFuentes.map((_, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            {/* Number in center of pie */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-2xl font-black">10.5k</span>
-                                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Leads</span>
+                        <div className="flex-1 min-h-0 relative">
+                            <div className="absolute inset-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={dataFuentes}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={45}
+                                            outerRadius={70}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {dataFuentes.map((_, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                {/* Number in center of pie */}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-2xl font-black">10.5k</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Leads</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -180,19 +184,21 @@ export default function DemoAnalytics() {
                     {/* Mini Bar Chart */}
                     <div className="bg-card p-5 rounded-2xl border border-border/50 shadow-sm flex-1 flex flex-col min-h-[200px] lg:min-h-0">
                         <h3 className="font-bold mb-4">Conversión por Plan</h3>
-                        <div className="flex-1 w-full min-h-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={[
-                                    { name: 'Básico', ventas: 400 },
-                                    { name: 'Pro', ventas: 300 },
-                                    { name: 'Enterprise', ventas: 150 },
-                                ]}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.2} />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} dy={5}/>
-                                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 'bold' }} />
-                                    <Bar dataKey="ventas" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="flex-1 min-h-0 relative">
+                            <div className="absolute inset-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={[
+                                        { name: 'Básico', ventas: 400 },
+                                        { name: 'Pro', ventas: 300 },
+                                        { name: 'Enterprise', ventas: 150 },
+                                    ]}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.2} />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} dy={5}/>
+                                        <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 'bold' }} />
+                                        <Bar dataKey="ventas" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={30} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </div>
                 </div>
